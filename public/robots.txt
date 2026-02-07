@@ -1,0 +1,16 @@
+# robots.txt for Любовь — Галерея Интерьерного Искусства
+# https://lubov-art.ru
+
+User-agent: *
+Allow: /
+
+# Disallow admin and api routes (if any)
+Disallow: /api/
+Disallow: /_next/
+Disallow: /admin/
+
+# Sitemap
+Sitemap: https://lubov-art.ru/sitemap.xml
+
+# Crawl-delay for polite crawling
+Crawl-delay: 1

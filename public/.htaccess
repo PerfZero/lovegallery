@@ -1,0 +1,25 @@
+Options -MultiViews
+RewriteEngine On
+RewriteBase /
+
+# Handle trailing slash
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_URI} !(.*)\/$
+RewriteCond %{REQUEST_URI} !\.(html|css|js|json|xml|jpg|jpeg|png|gif|webp|svg|woff|woff2|ttf|eot|ico|map|txt)$ [NC]
+RewriteRule ^(.*)$ $1/ [L,R=301]
+
+# Serve .html files
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}.html -f
+RewriteRule ^ %{REQUEST_URI}.html [L]
+
+# Fallback for nested routes with trailingSlash: true
+# (Next.js export with trailingSlash: true creates folder/index.html)
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI}index.html -f
+RewriteRule ^ %{REQUEST_URI}index.html [L]
+
+# Error 404
+ErrorDocument 404 /404.html
