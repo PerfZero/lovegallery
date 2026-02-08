@@ -45,7 +45,8 @@ export async function POST(req: Request) {
     const readTime = body.readTime || computeReadTime(contentText);
     const excerpt =
       body.excerpt || body.subtitle || buildExcerptFromText(contentText);
-    const category = String(body.category || "").trim() || null;
+    const categoryValue = String(body.category || "").trim();
+    const category = categoryValue || undefined;
     if (category) createBlogCategory(category);
 
     const result = createBlogPost({
