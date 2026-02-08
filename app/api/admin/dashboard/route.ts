@@ -10,36 +10,61 @@ function toIsoDate(d: Date) {
 
 export async function GET() {
   try {
-    const totalRequests = db
-      .prepare("SELECT COUNT(*) as count FROM requests")
-      .get()?.count as number;
-    const newRequests = db
-      .prepare("SELECT COUNT(*) as count FROM requests WHERE status = 'new'")
-      .get()?.count as number;
-    const processingRequests = db
-      .prepare(
-        "SELECT COUNT(*) as count FROM requests WHERE status = 'processing'",
-      )
-      .get()?.count as number;
-    const archivedRequests = db
-      .prepare("SELECT COUNT(*) as count FROM requests WHERE status = 'done'")
-      .get()?.count as number;
+    const totalRequests =
+      (
+        db.prepare("SELECT COUNT(*) as count FROM requests").get() as {
+          count: number;
+        }
+      )?.count ?? 0;
+    const newRequests =
+      (
+        db
+          .prepare(
+            "SELECT COUNT(*) as count FROM requests WHERE status = 'new'",
+          )
+          .get() as { count: number }
+      )?.count ?? 0;
+    const processingRequests =
+      (
+        db
+          .prepare(
+            "SELECT COUNT(*) as count FROM requests WHERE status = 'processing'",
+          )
+          .get() as { count: number }
+      )?.count ?? 0;
+    const archivedRequests =
+      (
+        db
+          .prepare(
+            "SELECT COUNT(*) as count FROM requests WHERE status = 'done'",
+          )
+          .get() as { count: number }
+      )?.count ?? 0;
 
-    const publishedPosts = db
-      .prepare(
-        "SELECT COUNT(*) as count FROM blog_posts WHERE status = 'published'",
-      )
-      .get()?.count as number;
+    const publishedPosts =
+      (
+        db
+          .prepare(
+            "SELECT COUNT(*) as count FROM blog_posts WHERE status = 'published'",
+          )
+          .get() as { count: number }
+      )?.count ?? 0;
 
-    const totalPosts = db
-      .prepare("SELECT COUNT(*) as count FROM blog_posts")
-      .get()?.count as number;
+    const totalPosts =
+      (
+        db.prepare("SELECT COUNT(*) as count FROM blog_posts").get() as {
+          count: number;
+        }
+      )?.count ?? 0;
 
-    const categories = db
-      .prepare(
-        "SELECT COUNT(DISTINCT category) as count FROM blog_posts WHERE category IS NOT NULL AND category != ''",
-      )
-      .get()?.count as number;
+    const categories =
+      (
+        db
+          .prepare(
+            "SELECT COUNT(DISTINCT category) as count FROM blog_posts WHERE category IS NOT NULL AND category != ''",
+          )
+          .get() as { count: number }
+      )?.count ?? 0;
 
     const recent = db
       .prepare(

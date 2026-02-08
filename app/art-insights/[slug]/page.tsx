@@ -15,7 +15,7 @@ type PageProps = {
 export default async function ArticlePage({ params }: PageProps) {
   const { slug } = await params;
   ensureBlogSeeded();
-  const articleRow = getBlogPostBySlug(slug);
+  const articleRow = getBlogPostBySlug(slug) as any;
   const article = articleRow
     ? {
         ...articleRow,
@@ -198,52 +198,54 @@ export default async function ArticlePage({ params }: PageProps) {
                       );
                     }
 
-                    return contentText.split("\n").map((paragraph, index) => {
-                      if (paragraph.startsWith("## ")) {
-                        return (
-                          <h2
-                            key={index}
-                            className="text-2xl md:text-3xl font-display italic mt-16 mb-8 text-foreground"
-                          >
-                            {paragraph.replace("## ", "")}
-                          </h2>
-                        );
-                      }
-                      if (
-                        paragraph.startsWith("**") &&
-                        paragraph.endsWith("**")
-                      ) {
-                        return (
-                          <p
-                            key={index}
-                            className="text-lg font-medium mt-8 mb-4 text-foreground"
-                          >
-                            {paragraph.replace(/\*\*/g, "")}
-                          </p>
-                        );
-                      }
-                      if (paragraph.startsWith("- ")) {
-                        return (
-                          <li
-                            key={index}
-                            className="text-foreground/80 ml-6 mb-2 list-disc"
-                          >
-                            {paragraph.replace("- ", "")}
-                          </li>
-                        );
-                      }
-                      if (paragraph.trim()) {
-                        return (
-                          <p
-                            key={index}
-                            className="text-lg text-foreground/80 leading-relaxed mb-6"
-                          >
-                            {paragraph}
-                          </p>
-                        );
-                      }
-                      return null;
-                    });
+                    return contentText
+                      .split("\n")
+                      .map((paragraph: string, index: number) => {
+                        if (paragraph.startsWith("## ")) {
+                          return (
+                            <h2
+                              key={index}
+                              className="text-2xl md:text-3xl font-display italic mt-16 mb-8 text-foreground"
+                            >
+                              {paragraph.replace("## ", "")}
+                            </h2>
+                          );
+                        }
+                        if (
+                          paragraph.startsWith("**") &&
+                          paragraph.endsWith("**")
+                        ) {
+                          return (
+                            <p
+                              key={index}
+                              className="text-lg font-medium mt-8 mb-4 text-foreground"
+                            >
+                              {paragraph.replace(/\*\*/g, "")}
+                            </p>
+                          );
+                        }
+                        if (paragraph.startsWith("- ")) {
+                          return (
+                            <li
+                              key={index}
+                              className="text-foreground/80 ml-6 mb-2 list-disc"
+                            >
+                              {paragraph.replace("- ", "")}
+                            </li>
+                          );
+                        }
+                        if (paragraph.trim()) {
+                          return (
+                            <p
+                              key={index}
+                              className="text-lg text-foreground/80 leading-relaxed mb-6"
+                            >
+                              {paragraph}
+                            </p>
+                          );
+                        }
+                        return null;
+                      });
                   })()}
                 </div>
 
@@ -305,7 +307,7 @@ export default async function ArticlePage({ params }: PageProps) {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {relatedArticles.map((relatedArticle) => (
+              {relatedArticles.map((relatedArticle: any) => (
                 <Link
                   key={relatedArticle.slug}
                   href={`/art-insights/${relatedArticle.slug}`}

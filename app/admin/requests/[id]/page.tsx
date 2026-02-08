@@ -23,7 +23,21 @@ export default async function AdminRequestDetailPage({
   const id = Number(idParam);
   if (!Number.isFinite(id)) notFound();
 
-  const request = getRequestById(id);
+  const request = getRequestById(id) as null | {
+    id: number;
+    form_type: string;
+    name?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    subject?: string | null;
+    message?: string | null;
+    product?: string | null;
+    price?: string | null;
+    options_json?: string | null;
+    status: string;
+    notes?: string | null;
+    created_at: string;
+  };
   if (!request) {
     return (
       <div className="space-y-8">
@@ -41,7 +55,7 @@ export default async function AdminRequestDetailPage({
     );
   }
 
-  const options = parseOptions(request.options_json);
+  const options = parseOptions(request.options_json ?? null);
 
   return (
     <div className="space-y-8">

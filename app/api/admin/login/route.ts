@@ -9,6 +9,13 @@ import {
 
 export const runtime = "nodejs";
 
+type AdminUser = {
+  id: number;
+  email: string;
+  password_hash: string;
+  role: string;
+};
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -35,10 +42,12 @@ export async function POST(req: Request) {
       );
     }
 
-    let user = getUserByEmail(email);
+    const fetchUser = (value: string) =>
+      getUserByEmail(value) as AdminUser | null;
+
+    let user = fetchUser(email);
 
     if (!user) {
-      // First login: only allow creating the admin user from env
       if (email !== adminEmail) {
         return NextResponse.json(
           { error: "Invalid credentials" },
@@ -47,7 +56,7 @@ export async function POST(req: Request) {
       }
       const passwordHash = hashPassword(adminPassword);
       createUser(adminEmail, passwordHash, "admin");
-      user = getUserByEmail(adminEmail);
+      user = fetchUser(adminEmail);
     }
 
     if (!user || !verifyPassword(password, user.password_hash)) {

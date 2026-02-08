@@ -59,7 +59,9 @@ export async function POST(req: Request) {
       readTime,
       image: body.image || null,
       contentText,
-      contentJson: body.contentJson ? JSON.stringify(body.contentJson) : null,
+      contentJson: body.contentJson
+        ? JSON.stringify(body.contentJson)
+        : undefined,
       status,
     });
 
