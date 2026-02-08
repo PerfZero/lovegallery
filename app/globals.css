@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Inter:wght@100..900&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Inter:wght@100..900&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -7,180 +7,234 @@
 /* Minimalist Gallery Design System */
 
 @layer base {
-  :root {
-    --background: 40 20% 96%;
-    --foreground: 30 10% 15%;
+    :root {
+        --background: 40 20% 96%;
+        --foreground: 30 10% 15%;
 
-    --card: 40 15% 98%;
-    /* ... colors ... */
-    --card-foreground: 30 10% 15%;
+        --card: 40 15% 98%;
+        /* ... colors ... */
+        --card-foreground: 30 10% 15%;
 
-    --popover: 40 15% 98%;
-    --popover-foreground: 30 10% 15%;
+        --popover: 40 15% 98%;
+        --popover-foreground: 30 10% 15%;
 
-    --primary: 30 10% 15%;
-    --primary-foreground: 40 20% 96%;
+        --primary: 30 10% 15%;
+        --primary-foreground: 40 20% 96%;
 
-    --secondary: 35 15% 92%;
-    --secondary-foreground: 30 10% 20%;
+        --secondary: 35 15% 92%;
+        --secondary-foreground: 30 10% 20%;
 
-    --muted: 35 10% 90%;
-    --muted-foreground: 30 8% 45%;
+        --muted: 35 10% 90%;
+        --muted-foreground: 30 8% 45%;
 
-    --accent: 25 30% 85%;
-    --accent-foreground: 30 10% 15%;
+        --accent: 25 30% 85%;
+        --accent-foreground: 30 10% 15%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+        --destructive: 0 84.2% 60.2%;
+        --destructive-foreground: 210 40% 98%;
 
-    --border: 35 15% 88%;
-    --input: 35 15% 88%;
-    --ring: 30 10% 30%;
+        --border: 35 15% 88%;
+        --input: 35 15% 88%;
+        --ring: 30 10% 30%;
 
-    --radius: 0px;
+        --radius: 0px;
 
-    --sidebar-background: 40 15% 97%;
-    --sidebar-foreground: 30 10% 25%;
-    --sidebar-primary: 30 10% 15%;
-    --sidebar-primary-foreground: 40 20% 96%;
-    --sidebar-accent: 35 12% 92%;
-    --sidebar-accent-foreground: 30 10% 20%;
-    --sidebar-border: 35 12% 88%;
-    --sidebar-ring: 30 10% 40%;
+        --sidebar-background: 40 15% 97%;
+        --sidebar-foreground: 30 10% 25%;
+        --sidebar-primary: 30 10% 15%;
+        --sidebar-primary-foreground: 40 20% 96%;
+        --sidebar-accent: 35 12% 92%;
+        --sidebar-accent-foreground: 30 10% 20%;
+        --sidebar-border: 35 12% 88%;
+        --sidebar-ring: 30 10% 40%;
 
-    /* Fonts are now handled by @import above */
-    --font-display: 'Cormorant Garamond', serif;
-    --font-body: 'Inter', sans-serif;
+        /* Fonts are now handled by @import above */
+        --font-display: "Cormorant Garamond", serif;
+        --font-body: "Inter", sans-serif;
 
-    --letter-spacing-wide: 0.35em;
-    --letter-spacing-normal: 0.08em;
-    --transition-smooth: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  }
+        --letter-spacing-wide: 0.35em;
+        --letter-spacing-normal: 0.08em;
+        --transition-smooth: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
 
-  .dark {
-    --background: 30 10% 8%;
-    --foreground: 40 15% 92%;
+    .dark {
+        --background: 30 10% 8%;
+        --foreground: 40 15% 92%;
 
-    --card: 30 10% 10%;
-    --card-foreground: 40 15% 92%;
+        --card: 30 10% 10%;
+        --card-foreground: 40 15% 92%;
 
-    --popover: 30 10% 10%;
-    --popover-foreground: 40 15% 92%;
+        --popover: 30 10% 10%;
+        --popover-foreground: 40 15% 92%;
 
-    --primary: 40 15% 92%;
-    --primary-foreground: 30 10% 8%;
+        --primary: 40 15% 92%;
+        --primary-foreground: 30 10% 8%;
 
-    --secondary: 30 8% 18%;
-    --secondary-foreground: 40 15% 92%;
+        --secondary: 30 8% 18%;
+        --secondary-foreground: 40 15% 92%;
 
-    --muted: 30 8% 20%;
-    --muted-foreground: 35 10% 60%;
+        --muted: 30 8% 20%;
+        --muted-foreground: 35 10% 60%;
 
-    --accent: 30 12% 25%;
-    --accent-foreground: 40 15% 92%;
+        --accent: 30 12% 25%;
+        --accent-foreground: 40 15% 92%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+        --destructive: 0 62.8% 30.6%;
+        --destructive-foreground: 210 40% 98%;
 
-    --border: 30 8% 20%;
-    --input: 30 8% 20%;
-    --ring: 35 10% 70%;
+        --border: 30 8% 20%;
+        --input: 30 8% 20%;
+        --ring: 35 10% 70%;
 
-    --sidebar-background: 30 10% 10%;
-    --sidebar-foreground: 40 15% 90%;
-    --sidebar-primary: 35 80% 60%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 30 8% 18%;
-    --sidebar-accent-foreground: 40 15% 90%;
-    --sidebar-border: 30 8% 18%;
-    --sidebar-ring: 35 80% 60%;
-  }
+        --sidebar-background: 30 10% 10%;
+        --sidebar-foreground: 40 15% 90%;
+        --sidebar-primary: 35 80% 60%;
+        --sidebar-primary-foreground: 0 0% 100%;
+        --sidebar-accent: 30 8% 18%;
+        --sidebar-accent-foreground: 40 15% 90%;
+        --sidebar-border: 30 8% 18%;
+        --sidebar-ring: 35 80% 60%;
+    }
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
+    * {
+        @apply border-border;
+    }
 
-  /* Absolute global cursor hide for premium feel */
-  *,
-  *::before,
-  *::after {}
+    /* Absolute global cursor hide for premium feel */
+    *,
+    *::before,
+    *::after {
+    }
 
-  body {
-    @apply bg-background text-foreground antialiased;
-    font-family: var(--font-body);
-  }
+    body {
+        @apply bg-background text-foreground antialiased;
+        font-family: var(--font-body);
+    }
 
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    font-family: var(--font-display);
-  }
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        font-family: var(--font-display);
+    }
 }
 
 @layer components {
-  .nav-link {
-    @apply text-xs tracking-widest uppercase text-muted-foreground transition-colors duration-300;
-    letter-spacing: var(--letter-spacing-wide);
-  }
+    .nav-link {
+        @apply text-xs tracking-widest uppercase text-muted-foreground transition-colors duration-300;
+        letter-spacing: var(--letter-spacing-wide);
+    }
 
-  .nav-link:hover {
-    @apply text-foreground;
-  }
+    .nav-link:hover {
+        @apply text-foreground;
+    }
 
-  .hero-title {
-    font-family: var(--font-display);
-    @apply text-foreground leading-tight;
-    letter-spacing: var(--letter-spacing-normal);
-  }
+    .hero-title {
+        font-family: var(--font-display);
+        @apply text-foreground leading-tight;
+        letter-spacing: var(--letter-spacing-normal);
+    }
 
-  .hero-italic {
-    font-family: var(--font-display);
-    @apply italic font-light;
-  }
+    .hero-italic {
+        font-family: var(--font-display);
+        @apply italic font-light;
+    }
 
-  .footer-link {
-    @apply text-xs text-muted-foreground transition-colors duration-300;
-    letter-spacing: 0.05em;
-  }
+    .footer-link {
+        @apply text-xs text-muted-foreground transition-colors duration-300;
+        letter-spacing: 0.05em;
+    }
 
-  .footer-link:hover {
-    @apply text-foreground;
-  }
+    .footer-link:hover {
+        @apply text-foreground;
+    }
 
-  .gallery-item {
-    @apply transition-transform duration-500 ease-out;
-  }
+    .gallery-item {
+        @apply transition-transform duration-500 ease-out;
+    }
 
-  .gallery-item:hover {
-    @apply scale-[1.02];
-  }
+    .gallery-item:hover {
+        @apply scale-[1.02];
+    }
+
+    .editor-content ul {
+        list-style: disc;
+        padding-left: 1.5rem;
+        margin: 0.75rem 0;
+    }
+
+    .editor-content ol {
+        list-style: decimal;
+        padding-left: 1.5rem;
+        margin: 0.75rem 0;
+    }
+
+    .editor-content li {
+        margin: 0.25rem 0;
+    }
+
+    .editor-content h2 {
+        font-family: var(--font-display);
+        font-size: 1.5rem;
+        font-style: italic;
+        margin: 1.5rem 0 0.75rem;
+    }
+
+    .editor-content h3 {
+        font-family: var(--font-display);
+        font-size: 1.25rem;
+        font-style: italic;
+        margin: 1.25rem 0 0.5rem;
+    }
+
+    .editor-content blockquote {
+        border-left: 3px solid hsl(var(--border));
+        padding-left: 1rem;
+        color: hsl(var(--muted-foreground));
+        margin: 1rem 0;
+    }
+
+    .prose-custom ol {
+        list-style: decimal;
+        padding-left: 1.5rem;
+        margin: 0.75rem 0 1rem;
+    }
+
+    .prose-custom ul {
+        list-style: disc;
+        padding-left: 1.5rem;
+        margin: 0.75rem 0 1rem;
+    }
+
+    .prose-custom li {
+        margin: 0.25rem 0;
+    }
 }
 
 @layer utilities {
-  .animate-marquee {
-    animation: marquee 160s linear infinite;
-  }
-
-  .animate-marquee:hover {
-    animation-play-state: paused;
-  }
-
-  .animate-marquee.paused {
-    animation-play-state: paused;
-  }
-
-  @keyframes marquee {
-    0% {
-      transform: translateX(0);
+    .animate-marquee {
+        animation: marquee 160s linear infinite;
     }
 
-    100% {
-      transform: translateX(-33.333%);
+    .animate-marquee:hover {
+        animation-play-state: paused;
     }
-  }
+
+    .animate-marquee.paused {
+        animation-play-state: paused;
+    }
+
+    @keyframes marquee {
+        0% {
+            transform: translateX(0);
+        }
+
+        100% {
+            transform: translateX(-33.333%);
+        }
+    }
 }
