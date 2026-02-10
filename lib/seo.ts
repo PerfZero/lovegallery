@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { siteConfig } from "@/data/site-config";
 
 export const DEFAULT_OG_IMAGE = "/images/love_interior_emotion.webp";
+export const SOCIAL_IMAGE_FALLBACK = "/images/interiors/interior_1.png";
+export const resolvedSiteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || siteConfig.url;
 
 type OpenGraphType = "website" | "article";
 
@@ -21,7 +24,19 @@ export function toAbsoluteUrl(path: string) {
   }
 
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  return new URL(normalizedPath, siteConfig.url).toString();
+  return new URL(normalizedPath, resolvedSiteUrl).toString();
+}
+
+function getSocialImageUrls(image?: string) {
+  const primary = toAbsoluteUrl(image || DEFAULT_OG_IMAGE);
+  const urls = [primary];
+
+  // Some social crawlers still fail on webp. Keep a png fallback second.
+  if (/\.webp(\?|$)/i.test(primary)) {
+    urls.push(toAbsoluteUrl(SOCIAL_IMAGE_FALLBACK));
+  }
+
+  return Array.from(new Set(urls));
 }
 
 function getRobotsMeta(noIndex?: boolean): Metadata["robots"] | undefined {
@@ -43,7 +58,7 @@ function getRobotsMeta(noIndex?: boolean): Metadata["robots"] | undefined {
 
 export function buildPageMetadata(options: BuildPageMetadataOptions): Metadata {
   const canonical = toAbsoluteUrl(options.path);
-  const ogImage = toAbsoluteUrl(options.image || DEFAULT_OG_IMAGE);
+  const socialImages = getSocialImageUrls(options.image);
 
   return {
     title: options.title,
@@ -59,20 +74,18 @@ export function buildPageMetadata(options: BuildPageMetadataOptions): Metadata {
       siteName: siteConfig.fullName,
       locale: siteConfig.locale,
       type: options.type || "website",
-      images: [
-        {
-          url: ogImage,
-          width: 1200,
-          height: 630,
-          alt: options.title,
-        },
-      ],
+      images: socialImages.map((url) => ({
+        url,
+        width: 1200,
+        height: 630,
+        alt: options.title,
+      })),
     },
     twitter: {
       card: "summary_large_image",
       title: options.title,
       description: options.description,
-      images: [ogImage],
+      images: socialImages,
     },
     robots: getRobotsMeta(options.noIndex),
   };

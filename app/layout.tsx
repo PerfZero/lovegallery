@@ -4,7 +4,7 @@ import { TransitionProvider } from "@/context/TransitionContext";
 import { ScrollToTop } from "@/components/ui/ScrollToTop";
 import { CookieConsent } from "@/components/ui/CookieConsent";
 import { Analytics } from "@/components/ui/Analytics";
-import { DEFAULT_OG_IMAGE } from "@/lib/seo";
+import { DEFAULT_OG_IMAGE, resolvedSiteUrl } from "@/lib/seo";
 import "./globals.css";
 
 // =============================================================================
@@ -12,7 +12,7 @@ import "./globals.css";
 // =============================================================================
 
 export const metadata: Metadata = {
-  metadataBase: new URL(siteConfig.url),
+  metadataBase: new URL(resolvedSiteUrl),
   title: {
     default: siteConfig.fullName,
     template: `%s | ${siteConfig.name}`,
