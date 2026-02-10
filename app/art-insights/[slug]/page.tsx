@@ -44,6 +44,12 @@ export async function generateMetadata({
     article.excerpt ||
     article.subtitle ||
     "Статья из раздела Арт-инсайты галереи Любовь.";
+  const keywords = [
+    "арт-инсайты",
+    "искусство",
+    "дизайн интерьера",
+    article.category,
+  ].filter((value): value is string => Boolean(value));
 
   return buildPageMetadata({
     title: article.title,
@@ -51,12 +57,7 @@ export async function generateMetadata({
     path: `/art-insights/${slug}`,
     image: article.image || "/images/art_insights_detail.webp",
     type: "article",
-    keywords: [
-      "арт-инсайты",
-      "искусство",
-      "дизайн интерьера",
-      article.category,
-    ].filter(Boolean),
+    keywords,
   });
 }
 

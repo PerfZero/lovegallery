@@ -3,7 +3,7 @@ import { siteConfig } from "@/data/site-config";
 
 export const DEFAULT_OG_IMAGE = "/images/love_interior_emotion.webp";
 
-type OpenGraphType = NonNullable<Metadata["openGraph"]>["type"];
+type OpenGraphType = "website" | "article";
 
 type BuildPageMetadataOptions = {
   title: string;
@@ -41,9 +41,7 @@ function getRobotsMeta(noIndex?: boolean): Metadata["robots"] | undefined {
   };
 }
 
-export function buildPageMetadata(
-  options: BuildPageMetadataOptions,
-): Metadata {
+export function buildPageMetadata(options: BuildPageMetadataOptions): Metadata {
   const canonical = toAbsoluteUrl(options.path);
   const ogImage = toAbsoluteUrl(options.image || DEFAULT_OG_IMAGE);
 
