@@ -4,6 +4,7 @@ import { TransitionProvider } from "@/context/TransitionContext";
 import { ScrollToTop } from "@/components/ui/ScrollToTop";
 import { CookieConsent } from "@/components/ui/CookieConsent";
 import { Analytics } from "@/components/ui/Analytics";
+import { DEFAULT_OG_IMAGE } from "@/lib/seo";
 import "./globals.css";
 
 // =============================================================================
@@ -11,27 +12,40 @@ import "./globals.css";
 // =============================================================================
 
 export const metadata: Metadata = {
+  metadataBase: new URL(siteConfig.url),
   title: {
     default: siteConfig.fullName,
     template: `%s | ${siteConfig.name}`,
   },
   description: siteConfig.description,
+  alternates: {
+    canonical: "/",
+  },
 
   // Open Graph
   openGraph: {
     title: siteConfig.fullName,
     description: siteConfig.description,
-    url: siteConfig.url,
-    siteName: siteConfig.name,
+    url: "/",
+    siteName: siteConfig.fullName,
     locale: siteConfig.locale,
-    type: 'website',
+    type: "website",
+    images: [
+      {
+        url: DEFAULT_OG_IMAGE,
+        width: 1200,
+        height: 630,
+        alt: siteConfig.fullName,
+      },
+    ],
   },
 
   // Twitter Card
   twitter: {
-    card: 'summary_large_image',
+    card: "summary_large_image",
     title: siteConfig.fullName,
     description: siteConfig.description,
+    images: [DEFAULT_OG_IMAGE],
   },
 
   // Robots
@@ -46,16 +60,16 @@ export const metadata: Metadata = {
 
   // Icons
   icons: {
-    icon: '/favicon.ico',
+    icon: "/favicon.ico",
   },
 };
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#f5f3f0' },
-    { media: '(prefers-color-scheme: dark)', color: '#1a1917' },
+    { media: "(prefers-color-scheme: light)", color: "#f5f3f0" },
+    { media: "(prefers-color-scheme: dark)", color: "#1a1917" },
   ],
-  width: 'device-width',
+  width: "device-width",
   initialScale: 1,
 };
 
@@ -74,12 +88,8 @@ export default function RootLayout({ children }: RootLayoutProps) {
         </TransitionProvider>
 
         {/* Analytics - replace with your actual IDs */}
-        <Analytics
-          yandexMetrikaId=""
-          googleAnalyticsId=""
-        />
+        <Analytics yandexMetrikaId="" googleAnalyticsId="" />
       </body>
     </html>
   );
 }
-

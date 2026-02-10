@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useParams, useRouter, notFound } from "next/navigation";
+import { useParams, notFound } from "next/navigation";
 import { motion } from "framer-motion";
-import { artworks } from "@/data/artworks";
+import { type Artwork } from "@/data/artworks";
 import { DSContainer } from "@/components/ui/design-system";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -11,7 +11,6 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { usePageTransition } from "@/context/TransitionContext";
 
-// Sub-components
 import { ProductVisuals } from "@/components/features/catalog/product/ProductVisuals";
 import { ProductInfo } from "@/components/features/catalog/product/ProductInfo";
 import { ProductConfigurator } from "@/components/features/catalog/product/ProductConfigurator";
@@ -22,45 +21,99 @@ import { ShareSection } from "@/components/features/art-insights/ShareSection";
 
 export default function ProductContent() {
   const params = useParams();
-  const router = useRouter();
   const id = params.id as string;
   const categoryId = params.category as string;
   const imgRef = useRef<HTMLImageElement>(null);
   const { registerTarget } = usePageTransition();
+  const [artwork, setArtwork] = useState<Artwork | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [isInteriorModalOpen, setIsInteriorModalOpen] = useState(false);
 
-  const artwork = artworks.find((art) => art.id === id);
+  const [selectedSize, setSelectedSize] = useState("50*70");
+  const [hasFrame, setHasFrame] = useState("Да");
+  const [hasPassepartout, setHasPassepartout] = useState("Да");
+  const [hasGlass, setHasGlass] = useState("Обычное");
+  const [productType, setProductType] = useState("Картина");
+  const [selectedFinish, setSelectedFinish] = useState("Дуб");
+  const [selectedFabric, setSelectedFabric] = useState("Ткань 1");
 
   useEffect(() => {
-    // Register this image as the target for the FLIP animation
+    let mounted = true;
+
+    fetch(`/api/catalog/${id}`, { cache: "no-store" })
+      .then(async (res) => {
+        if (!res.ok) throw new Error("Failed to load item");
+        return res.json();
+      })
+      .then((data) => {
+        if (!mounted) return;
+        const item = data.item as Artwork | undefined;
+        if (!item || item.category !== categoryId) {
+          setLoadError(true);
+          setArtwork(null);
+          return;
+        }
+        setSelectedSize(item.options?.sizes?.[0] || "50*70");
+        setSelectedFinish(item.options?.finishes?.[0] || "Дуб");
+        setSelectedFabric(item.options?.fabrics?.[0] || "Ткань 1");
+        setLoadError(false);
+        setArtwork(item);
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setLoadError(true);
+        setArtwork(null);
+      })
+      .finally(() => {
+        if (!mounted) return;
+        setLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [id, categoryId]);
+
+  useEffect(() => {
     if (imgRef.current && artwork) {
       registerTarget(`artwork-${artwork.id}`, imgRef.current);
     }
   }, [artwork, registerTarget]);
 
   if (!artwork) {
+    if (loading) {
+      return (
+        <div className="min-h-screen bg-background text-foreground relative">
+          <Header />
+          <main className="pt-24 pb-10">
+            <DSContainer>
+              <Link
+                href={`/catalog/${categoryId}`}
+                className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground transition-colors mb-6 group"
+              >
+                <ArrowLeft
+                  size={14}
+                  className="group-hover:-translate-x-1 transition-transform"
+                />
+                Вернуться в каталог
+              </Link>
+              <p className="text-sm text-muted-foreground">
+                Загрузка товара...
+              </p>
+            </DSContainer>
+          </main>
+          <Footer />
+        </div>
+      );
+    }
+    if (loadError) {
+      notFound();
+    }
     notFound();
   }
 
-  // Modals
-  const [isInteriorModalOpen, setIsInteriorModalOpen] = useState(false);
-  const isPetFurniture = artwork?.category === "pet-furniture";
-
-  // Selection States
-  const [selectedSize, setSelectedSize] = useState(
-    artwork?.options?.sizes?.[0] || "50*70",
-  );
-  const [hasFrame, setHasFrame] = useState("Да");
-  const [hasPassepartout, setHasPassepartout] = useState("Да");
-  const [hasGlass, setHasGlass] = useState("Обычное");
-  const [productType, setProductType] = useState("Картина");
-
-  // Pet Furniture States
-  const [selectedFinish, setSelectedFinish] = useState(
-    artwork?.options?.finishes?.[0] || "Дуб",
-  );
-  const [selectedFabric, setSelectedFabric] = useState(
-    artwork?.options?.fabrics?.[0] || "Ткань 1",
-  );
+  const isPetFurniture = artwork.category === "pet-furniture";
 
   return (
     <div className="min-h-screen bg-background text-foreground relative">
@@ -68,7 +121,6 @@ export default function ProductContent() {
 
       <main className="pt-24 pb-10">
         <DSContainer>
-          {/* Back Button */}
           <Link
             href={`/catalog/${categoryId}`}
             className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground transition-colors mb-6 group"
@@ -87,7 +139,6 @@ export default function ProductContent() {
               onOpenInterior={() => setIsInteriorModalOpen(true)}
             />
 
-            {/* 2. Product Information & Configurators - Delayed Entrance */}
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -142,9 +193,9 @@ export default function ProductContent() {
         <InteriorViewModal
           isOpen={isInteriorModalOpen}
           onClose={() => setIsInteriorModalOpen(false)}
-          productImage={artwork?.image}
-          productTitle={artwork?.title}
-          aspectRatio={artwork?.aspectRatio}
+          productImage={artwork.image}
+          productTitle={artwork.title}
+          aspectRatio={artwork.aspectRatio}
         />
       )}
     </div>

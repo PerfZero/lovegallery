@@ -1,39 +1,84 @@
 "use client";
 
-import { useParams, notFound } from 'next/navigation';
-import { DSContainer } from '@/components/ui/design-system';
-import Header from '@/components/layout/Header';
-import Footer from '@/components/layout/Footer';
-import { CategoryHeader } from '@/components/sections/CategoryHeader';
-import { ArtGrid } from '@/components/features/catalog/ArtGrid';
-import { artworks, categoryThemes } from '@/data/artworks';
+import { useEffect, useMemo, useState } from "react";
+import { useParams, notFound } from "next/navigation";
+import { DSContainer } from "@/components/ui/design-system";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
+import { CategoryHeader } from "@/components/sections/CategoryHeader";
+import { ArtGrid } from "@/components/features/catalog/ArtGrid";
+import { type Artwork, categoryThemes } from "@/data/artworks";
 
 export default function CategoryContent() {
-    const params = useParams();
-    const category = params.category as string;
+  const params = useParams();
+  const category = params.category as string;
+  const typedCategory = category as keyof typeof categoryThemes;
+  const [items, setItems] = useState<Artwork[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-    // Validate category
-    if (!(category in categoryThemes)) {
-        notFound();
-    }
+  // Validate category
+  if (!(category in categoryThemes)) {
+    notFound();
+  }
 
-    const filteredArtworks = artworks.filter(art => art.category === category);
+  useEffect(() => {
+    let mounted = true;
 
-    return (
-        <div className="min-h-screen bg-background text-foreground relative">
-            <Header />
+    fetch("/api/catalog", { cache: "no-store" })
+      .then((res) => res.json())
+      .then((data) => {
+        if (!mounted) return;
+        setItems(Array.isArray(data.items) ? data.items : []);
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setItems([]);
+        setError("Не удалось загрузить товары.");
+      })
+      .finally(() => {
+        if (!mounted) return;
+        setLoading(false);
+      });
 
-            <main className="relative z-10">
-                {/* 1. Immersive Editorial Header */}
-                <CategoryHeader category={category as any} />
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
-                {/* 2. Gallery Content */}
-                <DSContainer className="py-20">
-                    <ArtGrid artworks={filteredArtworks} />
-                </DSContainer>
-            </main>
+  const filteredArtworks = useMemo(
+    () => items.filter((art) => art.category === category),
+    [items, category],
+  );
 
-            <Footer />
-        </div>
-    );
+  return (
+    <div className="min-h-screen bg-background text-foreground relative">
+      <Header />
+
+      <main className="relative z-10">
+        {/* 1. Immersive Editorial Header */}
+        <CategoryHeader category={typedCategory} />
+
+        {/* 2. Gallery Content */}
+        <DSContainer className="py-20">
+          {loading && (
+            <p className="text-sm text-muted-foreground">
+              Загрузка каталога...
+            </p>
+          )}
+          {!loading && error && <p className="text-sm text-red-600">{error}</p>}
+          {!loading && !error && filteredArtworks.length === 0 && (
+            <p className="text-sm text-muted-foreground">
+              В этой категории пока нет товаров.
+            </p>
+          )}
+          {!loading && !error && filteredArtworks.length > 0 && (
+            <ArtGrid artworks={filteredArtworks} />
+          )}
+        </DSContainer>
+      </main>
+
+      <Footer />
+    </div>
+  );
 }

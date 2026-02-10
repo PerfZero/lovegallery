@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { DSContainer, DSHeading, DSText } from "@/components/ui/design-system";
 import Header from "@/components/layout/Header";
@@ -7,10 +8,57 @@ import { ShareSection } from "@/components/features/art-insights/ShareSection";
 import { BackButton } from "@/components/ui/BackButton";
 import { getBlogPostBySlug, listBlogPosts } from "@/lib/db";
 import { ensureBlogSeeded } from "@/lib/blog-seed";
+import { buildPageMetadata } from "@/lib/seo";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
 };
+
+type ArticleMetaRow = {
+  title: string;
+  excerpt: string | null;
+  subtitle: string | null;
+  image: string | null;
+  category: string | null;
+};
+
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
+  const { slug } = await params;
+  ensureBlogSeeded();
+  const article = getBlogPostBySlug(slug) as ArticleMetaRow | undefined;
+
+  if (!article) {
+    return buildPageMetadata({
+      title: "Статья не найдена",
+      description:
+        "Статья не найдена или была перенесена. Перейдите в раздел Арт-инсайты, чтобы открыть актуальные материалы о подборе искусства и интерьерных решениях.",
+      path: `/art-insights/${slug}`,
+      noIndex: true,
+      image: "/images/art_insights_detail.webp",
+    });
+  }
+
+  const baseDescription =
+    article.excerpt ||
+    article.subtitle ||
+    "Статья из раздела Арт-инсайты галереи Любовь.";
+
+  return buildPageMetadata({
+    title: article.title,
+    description: `${baseDescription} В материале собраны практические рекомендации и примеры, которые помогут выбрать искусство под стиль и задачи вашего пространства.`,
+    path: `/art-insights/${slug}`,
+    image: article.image || "/images/art_insights_detail.webp",
+    type: "article",
+    keywords: [
+      "арт-инсайты",
+      "искусство",
+      "дизайн интерьера",
+      article.category,
+    ].filter(Boolean),
+  });
+}
 
 export default async function ArticlePage({ params }: PageProps) {
   const { slug } = await params;
