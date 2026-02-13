@@ -14,6 +14,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { SaveBar } from "@/components/admin/save-bar";
+import { toast } from "@/components/ui/sonner";
 import {
   Collapsible,
   CollapsibleContent,
@@ -34,9 +36,67 @@ const CATEGORY_LABELS = Object.fromEntries(
   catalogPageContent.categories.map((item) => [item.id, item.title]),
 ) as Record<(typeof CATALOG_CATEGORY_IDS)[number], string>;
 
+function normalizeCatalogPageContent(
+  form: CatalogPageContentData,
+): CatalogPageContentData {
+  const orderedCategories = form.categories
+    .slice()
+    .sort(
+      (a, b) =>
+        CATALOG_CATEGORY_IDS.indexOf(a.id) - CATALOG_CATEGORY_IDS.indexOf(b.id),
+    );
+
+  const orderedCategoryPages = form.categoryPages
+    .slice()
+    .sort(
+      (a, b) =>
+        CATALOG_CATEGORY_IDS.indexOf(a.id) - CATALOG_CATEGORY_IDS.indexOf(b.id),
+    );
+
+  return {
+    hero: {
+      title: form.hero.title.trim(),
+      subtitle: form.hero.subtitle.trim(),
+    },
+    categories: orderedCategories.map((item) => ({
+      id: item.id,
+      title: item.title.trim(),
+      description: item.description.trim(),
+      videoPlaceholderColor: item.videoPlaceholderColor.trim(),
+      videoSrc: item.videoSrc?.trim() || undefined,
+    })),
+    categoryPages: orderedCategoryPages.map(
+      (item: CatalogCategoryPageItem) => ({
+        id: item.id,
+        navTitle: item.navTitle.trim(),
+        headline: item.headline.trim(),
+        accentColor: item.accentColor.trim(),
+        subnav: item.subnav
+          .map((entry) => ({
+            label: entry.label.trim(),
+            href: entry.href?.trim() || undefined,
+          }))
+          .filter((entry) => entry.label),
+      }),
+    ),
+    productPage: {
+      backButtonLabel: form.productPage.backButtonLabel.trim(),
+      materialsTitle: form.productPage.materialsTitle.trim(),
+      materialsDescription: form.productPage.materialsDescription.trim(),
+      deliveryTitle: form.productPage.deliveryTitle.trim(),
+      deliveryDescription: form.productPage.deliveryDescription.trim(),
+    },
+  };
+}
+
 export default function AdminCatalogContentPage() {
   const [form, setForm] = useState<CatalogPageContentData>(
     cloneCatalogPageContent(catalogPageContent),
+  );
+  const [savedSnapshot, setSavedSnapshot] = useState(() =>
+    JSON.stringify(
+      normalizeCatalogPageContent(cloneCatalogPageContent(catalogPageContent)),
+    ),
   );
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -63,7 +123,9 @@ export default function AdminCatalogContentPage() {
       .then((data) => {
         if (!mounted) return;
         if (!isCatalogPageContent(data?.item)) return;
-        setForm(cloneCatalogPageContent(data.item));
+        const nextForm = cloneCatalogPageContent(data.item);
+        setForm(nextForm);
+        setSavedSnapshot(JSON.stringify(normalizeCatalogPageContent(nextForm)));
       })
       .catch(() => {
         if (!mounted) return;
@@ -275,40 +337,7 @@ export default function AdminCatalogContentPage() {
     setError("");
     setSuccess("");
 
-    const normalized: CatalogPageContentData = {
-      hero: {
-        title: form.hero.title.trim(),
-        subtitle: form.hero.subtitle.trim(),
-      },
-      categories: categoryOrder.map((item) => ({
-        id: item.id,
-        title: item.title.trim(),
-        description: item.description.trim(),
-        videoPlaceholderColor: item.videoPlaceholderColor.trim(),
-        videoSrc: item.videoSrc?.trim() || undefined,
-      })),
-      categoryPages: categoryPagesOrder.map(
-        (item: CatalogCategoryPageItem) => ({
-          id: item.id,
-          navTitle: item.navTitle.trim(),
-          headline: item.headline.trim(),
-          accentColor: item.accentColor.trim(),
-          subnav: item.subnav
-            .map((entry) => ({
-              label: entry.label.trim(),
-              href: entry.href?.trim() || undefined,
-            }))
-            .filter((entry) => entry.label),
-        }),
-      ),
-      productPage: {
-        backButtonLabel: form.productPage.backButtonLabel.trim(),
-        materialsTitle: form.productPage.materialsTitle.trim(),
-        materialsDescription: form.productPage.materialsDescription.trim(),
-        deliveryTitle: form.productPage.deliveryTitle.trim(),
-        deliveryDescription: form.productPage.deliveryDescription.trim(),
-      },
-    };
+    const normalized = normalizeCatalogPageContent(form);
 
     if (!isCatalogPageContent(normalized)) {
       setError("Проверьте заполненность полей контента каталога.");
@@ -329,13 +358,21 @@ export default function AdminCatalogContentPage() {
       }
 
       setForm(cloneCatalogPageContent(normalized));
+      setSavedSnapshot(JSON.stringify(normalized));
       setSuccess("Изменения сохранены.");
+      toast.success("Изменения сохранены");
     } catch {
       setError("Ошибка сети при сохранении.");
     } finally {
       setSaving(false);
     }
   };
+
+  const normalizedForm = useMemo(
+    () => normalizeCatalogPageContent(form),
+    [form],
+  );
+  const isDirty = JSON.stringify(normalizedForm) !== savedSnapshot;
 
   if (loading) {
     return <div className="text-sm text-muted-foreground">Загрузка...</div>;
@@ -807,11 +844,7 @@ export default function AdminCatalogContentPage() {
         </div>
       )}
 
-      <div className="flex justify-end">
-        <Button onClick={handleSave} disabled={saving}>
-          {saving ? "Сохранение..." : "Сохранить изменения"}
-        </Button>
-      </div>
+      <SaveBar visible={isDirty} saving={saving} onSave={handleSave} />
     </div>
   );
 }

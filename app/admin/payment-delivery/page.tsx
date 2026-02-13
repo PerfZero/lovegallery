@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { ChevronDown, Plus, Trash2 } from "lucide-react";
 import { AdminPageHeader } from "@/components/admin/page-header";
@@ -16,6 +16,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
+import { SaveBar } from "@/components/admin/save-bar";
+import { toast } from "@/components/ui/sonner";
 import {
   paymentDeliveryContent,
   type PaymentDeliveryContentData,
@@ -34,9 +36,79 @@ function makeEmptyLogo(): PaymentDeliveryLogo {
   };
 }
 
+function normalizePaymentDeliveryContent(
+  form: PaymentDeliveryContentData,
+): PaymentDeliveryContentData {
+  return {
+    hero: {
+      badge: form.hero.badge.trim(),
+      titlePrimary: form.hero.titlePrimary.trim(),
+      titleAccent: form.hero.titleAccent.trim(),
+      description: form.hero.description.trim(),
+    },
+    features: form.features
+      .map((item) => ({
+        title: item.title.trim(),
+        description: item.description.trim(),
+      }))
+      .filter((item) => item.title || item.description),
+    concierge: {
+      ...form.concierge,
+      badge: form.concierge.badge.trim(),
+      titlePrimary: form.concierge.titlePrimary.trim(),
+      titleAccent: form.concierge.titleAccent.trim(),
+      description: form.concierge.description.trim(),
+      image: form.concierge.image.trim(),
+      imageBadge: {
+        kicker: form.concierge.imageBadge.kicker.trim(),
+        text: form.concierge.imageBadge.text.trim(),
+      },
+      bullets: form.concierge.bullets
+        .map((item) => item.trim())
+        .filter(Boolean),
+    },
+    logistics: {
+      ...form.logistics,
+      badge: form.logistics.badge.trim(),
+      titlePrimary: form.logistics.titlePrimary.trim(),
+      titleAccent: form.logistics.titleAccent.trim(),
+      description: form.logistics.description.trim(),
+      image: form.logistics.image.trim(),
+      highlights: form.logistics.highlights
+        .map((item) => item.trim())
+        .filter(Boolean),
+      partners: form.logistics.partners
+        .map((item) => item.trim())
+        .filter(Boolean),
+    },
+    payment: {
+      ...form.payment,
+      title: form.payment.title.trim(),
+      description: form.payment.description.trim(),
+      logos: form.payment.logos
+        .map((logo) => ({
+          name: logo.name.trim(),
+          image: logo.image.trim(),
+          alt: logo.alt.trim(),
+        }))
+        .filter((logo) => logo.name || logo.image || logo.alt),
+      trustBadges: form.payment.trustBadges
+        .map((item) => item.trim())
+        .filter(Boolean),
+    },
+  };
+}
+
 export default function AdminPaymentDeliveryPage() {
   const [form, setForm] = useState<PaymentDeliveryContentData>(
     clonePaymentDeliveryContent(paymentDeliveryContent),
+  );
+  const [savedSnapshot, setSavedSnapshot] = useState(() =>
+    JSON.stringify(
+      normalizePaymentDeliveryContent(
+        clonePaymentDeliveryContent(paymentDeliveryContent),
+      ),
+    ),
   );
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -58,7 +130,11 @@ export default function AdminPaymentDeliveryPage() {
       .then((data) => {
         if (!mounted) return;
         if (!isPaymentDeliveryContent(data?.item)) return;
-        setForm(clonePaymentDeliveryContent(data.item));
+        const nextForm = clonePaymentDeliveryContent(data.item);
+        setForm(nextForm);
+        setSavedSnapshot(
+          JSON.stringify(normalizePaymentDeliveryContent(nextForm)),
+        );
       })
       .catch(() => {
         if (!mounted) return;
@@ -374,64 +450,7 @@ export default function AdminPaymentDeliveryPage() {
     setError("");
     setSuccess("");
 
-    const normalized: PaymentDeliveryContentData = {
-      hero: {
-        badge: form.hero.badge.trim(),
-        titlePrimary: form.hero.titlePrimary.trim(),
-        titleAccent: form.hero.titleAccent.trim(),
-        description: form.hero.description.trim(),
-      },
-      features: form.features
-        .map((item) => ({
-          title: item.title.trim(),
-          description: item.description.trim(),
-        }))
-        .filter((item) => item.title || item.description),
-      concierge: {
-        ...form.concierge,
-        badge: form.concierge.badge.trim(),
-        titlePrimary: form.concierge.titlePrimary.trim(),
-        titleAccent: form.concierge.titleAccent.trim(),
-        description: form.concierge.description.trim(),
-        image: form.concierge.image.trim(),
-        imageBadge: {
-          kicker: form.concierge.imageBadge.kicker.trim(),
-          text: form.concierge.imageBadge.text.trim(),
-        },
-        bullets: form.concierge.bullets
-          .map((item) => item.trim())
-          .filter(Boolean),
-      },
-      logistics: {
-        ...form.logistics,
-        badge: form.logistics.badge.trim(),
-        titlePrimary: form.logistics.titlePrimary.trim(),
-        titleAccent: form.logistics.titleAccent.trim(),
-        description: form.logistics.description.trim(),
-        image: form.logistics.image.trim(),
-        highlights: form.logistics.highlights
-          .map((item) => item.trim())
-          .filter(Boolean),
-        partners: form.logistics.partners
-          .map((item) => item.trim())
-          .filter(Boolean),
-      },
-      payment: {
-        ...form.payment,
-        title: form.payment.title.trim(),
-        description: form.payment.description.trim(),
-        logos: form.payment.logos
-          .map((logo) => ({
-            name: logo.name.trim(),
-            image: logo.image.trim(),
-            alt: logo.alt.trim(),
-          }))
-          .filter((logo) => logo.name || logo.image || logo.alt),
-        trustBadges: form.payment.trustBadges
-          .map((item) => item.trim())
-          .filter(Boolean),
-      },
-    };
+    const normalized = normalizePaymentDeliveryContent(form);
 
     if (!isPaymentDeliveryContent(normalized)) {
       setError("Проверьте обязательные поля и заполненность блоков.");
@@ -452,13 +471,21 @@ export default function AdminPaymentDeliveryPage() {
       }
 
       setForm(clonePaymentDeliveryContent(normalized));
+      setSavedSnapshot(JSON.stringify(normalized));
       setSuccess("Изменения сохранены.");
+      toast.success("Изменения сохранены");
     } catch {
       setError("Ошибка сети при сохранении.");
     } finally {
       setSaving(false);
     }
   };
+
+  const normalizedForm = useMemo(
+    () => normalizePaymentDeliveryContent(form),
+    [form],
+  );
+  const isDirty = JSON.stringify(normalizedForm) !== savedSnapshot;
 
   if (loading) {
     return <div className="text-sm text-muted-foreground">Загрузка...</div>;
@@ -1231,11 +1258,7 @@ export default function AdminPaymentDeliveryPage() {
         </div>
       )}
 
-      <div className="flex justify-end">
-        <Button onClick={handleSave} disabled={saving}>
-          {saving ? "Сохранение..." : "Сохранить изменения"}
-        </Button>
-      </div>
+      <SaveBar visible={isDirty} saving={saving} onSave={handleSave} />
     </div>
   );
 }

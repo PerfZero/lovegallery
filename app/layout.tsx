@@ -4,6 +4,7 @@ import { TransitionProvider } from "@/context/TransitionContext";
 import { ScrollToTop } from "@/components/ui/ScrollToTop";
 import { CookieConsent } from "@/components/ui/CookieConsent";
 import { Analytics } from "@/components/ui/Analytics";
+import { Toaster } from "@/components/ui/sonner";
 import { DEFAULT_OG_IMAGE, resolvedSiteUrl } from "@/lib/seo";
 import "./globals.css";
 
@@ -92,6 +93,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
         </TransitionProvider>
 
         <Analytics yandexMetrikaId="106819077" googleAnalyticsId="" />
+        <Toaster position="top-center" richColors />
       </body>
     </html>
   );

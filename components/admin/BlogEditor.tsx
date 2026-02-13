@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { SaveBar } from "@/components/admin/save-bar";
+import { toast } from "@/components/ui/sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -26,7 +28,7 @@ export type BlogEditorValue = {
   status: "published" | "draft";
   image: string;
   contentText?: string;
-  contentJson?: any;
+  contentJson?: unknown;
 };
 
 type BlogEditorPayload = {
@@ -38,6 +40,23 @@ type BlogEditorPayload = {
   status: "published" | "draft";
   image: string;
   contentText: string;
+};
+
+type BlogPayloadInput = {
+  title: string;
+  subtitle: string;
+  category: string;
+  date: string;
+  slug: string;
+  status: "published" | "draft";
+  image: string;
+  html: string;
+};
+
+type ContentBlock = {
+  type?: string;
+  text?: string;
+  items?: string[];
 };
 
 function htmlToText(html: string) {
@@ -62,7 +81,7 @@ function computeReadTimeFromHtml(html: string) {
   return `${minutes} мин`;
 }
 
-function blocksToHtml(blocks: any[]) {
+function blocksToHtml(blocks: ContentBlock[]) {
   return blocks
     .map((b) => {
       if (b.type === "heading") return `<h2>${b.text || ""}</h2>`;
@@ -119,10 +138,13 @@ function resolveInitialContent(initial?: Partial<BlogEditorValue>) {
   }
   if (initial.contentJson) {
     try {
-      const blocks = Array.isArray(initial.contentJson)
-        ? initial.contentJson
-        : JSON.parse(initial.contentJson as any);
-      if (Array.isArray(blocks) && blocks.length) return blocksToHtml(blocks);
+      const blocks =
+        typeof initial.contentJson === "string"
+          ? JSON.parse(initial.contentJson)
+          : initial.contentJson;
+      if (Array.isArray(blocks) && blocks.length) {
+        return blocksToHtml(blocks as ContentBlock[]);
+      }
     } catch {}
   }
   return "<p></p>";
@@ -141,6 +163,19 @@ function stripStyles(html: string) {
 
 function normalizeMarkdownBold(html: string) {
   return html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+function buildBlogPayload(input: BlogPayloadInput): BlogEditorPayload {
+  return {
+    title: input.title,
+    subtitle: input.subtitle,
+    category: input.category,
+    date: input.date,
+    slug: input.slug,
+    status: input.status,
+    image: input.image,
+    contentText: normalizeMarkdownBold(stripStyles(input.html)),
+  };
 }
 
 export function BlogEditor({
@@ -169,6 +204,23 @@ export function BlogEditor({
   const [newCategory, setNewCategory] = useState("");
   const editorRef = useRef<HTMLDivElement | null>(null);
   const initialContentRef = useRef<string>(resolveInitialContent(initial));
+  const [contentHtmlState, setContentHtmlState] = useState(
+    initialContentRef.current,
+  );
+  const [savedSnapshot, setSavedSnapshot] = useState(() =>
+    JSON.stringify(
+      buildBlogPayload({
+        title: initial?.title || "",
+        subtitle: initial?.subtitle || "",
+        category: initial?.category || "",
+        date: initial?.date || "",
+        slug: initial?.slug || "",
+        status: initial?.status || "published",
+        image: initial?.image || "",
+        html: initialContentRef.current,
+      }),
+    ),
+  );
 
   useEffect(() => {
     if (!slugTouched) setSlug(slugify(title));
@@ -185,7 +237,15 @@ export function BlogEditor({
       .then((data) => {
         if (!mounted) return;
         const items = Array.isArray(data.items) ? data.items : [];
-        setCategories(items.map((i: any) => i.name));
+        setCategories(
+          items
+            .map((item: unknown) =>
+              item && typeof item === "object" && "name" in item
+                ? String((item as { name?: unknown }).name || "")
+                : "",
+            )
+            .filter(Boolean),
+        );
       })
       .catch(() => {
         if (!mounted) return;
@@ -199,6 +259,7 @@ export function BlogEditor({
   useEffect(() => {
     if (!editorRef.current) return;
     editorRef.current.innerHTML = initialContentRef.current;
+    setContentHtmlState(initialContentRef.current);
     setReadTime(computeReadTimeFromHtml(initialContentRef.current));
   }, []);
 
@@ -243,7 +304,15 @@ export function BlogEditor({
     if (!res.ok) return;
     const data = await res.json();
     const items = Array.isArray(data.items) ? data.items : [];
-    setCategories(items.map((i: any) => i.name));
+    setCategories(
+      items
+        .map((item: unknown) =>
+          item && typeof item === "object" && "name" in item
+            ? String((item as { name?: unknown }).name || "")
+            : "",
+        )
+        .filter(Boolean),
+    );
     setCategory(name);
     setNewCategory("");
   };
@@ -251,10 +320,7 @@ export function BlogEditor({
   const handleSave = async () => {
     setSaving(true);
     try {
-      let html = contentHtml();
-      html = stripStyles(html);
-      html = normalizeMarkdownBold(html);
-      await onSave({
+      const payload = buildBlogPayload({
         title,
         subtitle,
         category,
@@ -262,12 +328,44 @@ export function BlogEditor({
         slug,
         status,
         image,
-        contentText: html,
+        html: contentHtml(),
       });
+      await onSave(payload);
+      setSavedSnapshot(JSON.stringify(payload));
+      toast.success("Изменения сохранены");
+    } catch {
+      toast.error("Не удалось сохранить изменения");
     } finally {
       setSaving(false);
     }
   };
+
+  const isDirty = useMemo(
+    () =>
+      JSON.stringify(
+        buildBlogPayload({
+          title,
+          subtitle,
+          category,
+          date,
+          slug,
+          status,
+          image,
+          html: contentHtmlState,
+        }),
+      ) !== savedSnapshot,
+    [
+      title,
+      subtitle,
+      category,
+      date,
+      slug,
+      status,
+      image,
+      contentHtmlState,
+      savedSnapshot,
+    ],
+  );
 
   return (
     <div className="space-y-8">
@@ -472,6 +570,7 @@ export function BlogEditor({
           suppressContentEditableWarning
           onInput={() => {
             const html = contentHtml();
+            setContentHtmlState(html);
             setReadTime(computeReadTimeFromHtml(html));
           }}
           className="editor-content min-h-[320px] rounded-lg border border-border/40 bg-white/70 p-4 text-base leading-relaxed focus:outline-none focus:ring-2 focus:ring-accent/40"
@@ -483,15 +582,19 @@ export function BlogEditor({
       </div>
 
       <div className="flex items-center gap-3">
-        <Button onClick={handleSave} disabled={saving}>
-          {saving ? "Сохранение..." : "Сохранить"}
-        </Button>
         {onDelete && (
           <Button variant="ghost" className="text-red-600" onClick={onDelete}>
             Удалить
           </Button>
         )}
       </div>
+
+      <SaveBar
+        visible={isDirty}
+        saving={saving}
+        label="Сохранить"
+        onSave={handleSave}
+      />
     </div>
   );
 }

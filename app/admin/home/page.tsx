@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, Plus, Trash2 } from "lucide-react";
 import { AdminPageHeader } from "@/components/admin/page-header";
 import {
@@ -14,12 +14,50 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
+import { SaveBar } from "@/components/admin/save-bar";
+import { toast } from "@/components/ui/sonner";
 import { homeContent, type HomeContentData } from "@/data/home-content";
 import { cloneHomeContent, isHomeContent } from "@/lib/home-content";
+
+function normalizeHomeContent(form: HomeContentData): HomeContentData {
+  return {
+    animatedOverlay: {
+      line1: form.animatedOverlay.line1.trim(),
+      line2: form.animatedOverlay.line2.trim(),
+    },
+    hero: {
+      tagline: {
+        intro: form.hero.tagline.intro.trim(),
+        emphasis: form.hero.tagline.emphasis.trim(),
+        highlight: form.hero.tagline.highlight.trim(),
+      },
+      description: {
+        main: form.hero.description.main.trim(),
+        continuation: form.hero.description.continuation.trim(),
+        adjectives: form.hero.description.adjectives
+          .map((item) => item.trim())
+          .filter(Boolean),
+        suffix: form.hero.description.suffix.trim(),
+      },
+    },
+    contact: {
+      headline: {
+        line1: form.contact.headline.line1.trim(),
+        line2: form.contact.headline.line2.trim(),
+      },
+      cta: {
+        label: form.contact.cta.label.trim(),
+      },
+    },
+  };
+}
 
 export default function AdminHomePage() {
   const [form, setForm] = useState<HomeContentData>(
     cloneHomeContent(homeContent),
+  );
+  const [savedSnapshot, setSavedSnapshot] = useState(() =>
+    JSON.stringify(normalizeHomeContent(cloneHomeContent(homeContent))),
   );
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -38,7 +76,9 @@ export default function AdminHomePage() {
       .then((data) => {
         if (!mounted) return;
         if (!isHomeContent(data?.item)) return;
-        setForm(cloneHomeContent(data.item));
+        const nextForm = cloneHomeContent(data.item);
+        setForm(nextForm);
+        setSavedSnapshot(JSON.stringify(normalizeHomeContent(nextForm)));
       })
       .catch(() => {
         if (!mounted) return;
@@ -166,42 +206,15 @@ export default function AdminHomePage() {
     setError("");
     setSuccess("");
 
-    const normalized: HomeContentData = {
-      animatedOverlay: {
-        line1: form.animatedOverlay.line1.trim(),
-        line2: form.animatedOverlay.line2.trim(),
-      },
-      hero: {
-        tagline: {
-          intro: form.hero.tagline.intro.trim(),
-          emphasis: form.hero.tagline.emphasis.trim(),
-          highlight: form.hero.tagline.highlight.trim(),
-        },
-        description: {
-          main: form.hero.description.main.trim(),
-          continuation: form.hero.description.continuation.trim(),
-          adjectives: form.hero.description.adjectives
-            .map((item) => item.trim())
-            .filter(Boolean),
-          suffix: form.hero.description.suffix.trim(),
-        },
-      },
-      contact: {
-        headline: {
-          line1: form.contact.headline.line1.trim(),
-          line2: form.contact.headline.line2.trim(),
-        },
-        cta: {
-          label: form.contact.cta.label.trim(),
-        },
-      },
-    };
+    const normalized = normalizeHomeContent(form);
 
     if (
       normalized.hero.description.adjectives.length === 0 &&
       form.hero.description.adjectives.length > 0
     ) {
-      setError("При заполненных полях прилагательных нельзя сохранять пустые значения.");
+      setError(
+        "При заполненных полях прилагательных нельзя сохранять пустые значения.",
+      );
       return;
     }
 
@@ -225,13 +238,18 @@ export default function AdminHomePage() {
       }
 
       setForm(cloneHomeContent(normalized));
+      setSavedSnapshot(JSON.stringify(normalized));
       setSuccess("Изменения сохранены.");
+      toast.success("Изменения сохранены");
     } catch {
       setError("Ошибка сети при сохранении.");
     } finally {
       setSaving(false);
     }
   };
+
+  const normalizedForm = useMemo(() => normalizeHomeContent(form), [form]);
+  const isDirty = JSON.stringify(normalizedForm) !== savedSnapshot;
 
   if (loading) {
     return <div className="text-sm text-muted-foreground">Загрузка...</div>;
@@ -248,7 +266,9 @@ export default function AdminHomePage() {
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle>Текст-оверлей</CardTitle>
-            <CardDescription>Крупный анимированный текст в первом экране.</CardDescription>
+            <CardDescription>
+              Крупный анимированный текст в первом экране.
+            </CardDescription>
           </div>
           <Button
             type="button"
@@ -300,7 +320,11 @@ export default function AdminHomePage() {
               Основной заголовок и описание в первом блоке главной.
             </CardDescription>
           </div>
-          <Button type="button" variant="ghost" onClick={() => toggleSection("hero")}>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => toggleSection("hero")}
+          >
             {openSections.hero ? "Свернуть" : "Развернуть"}
             <ChevronDown
               className={`ml-2 h-4 w-4 transition-transform ${
@@ -309,7 +333,10 @@ export default function AdminHomePage() {
             />
           </Button>
         </CardHeader>
-        <Collapsible open={openSections.hero} onOpenChange={() => toggleSection("hero")}>
+        <Collapsible
+          open={openSections.hero}
+          onOpenChange={() => toggleSection("hero")}
+        >
           <CollapsibleContent>
             <CardContent className="space-y-6">
               <div className="grid md:grid-cols-3 gap-4">
@@ -325,7 +352,9 @@ export default function AdminHomePage() {
                   <Label>Tagline: emphasis</Label>
                   <Input
                     value={form.hero.tagline.emphasis}
-                    onChange={(e) => updateHeroTagline("emphasis", e.target.value)}
+                    onChange={(e) =>
+                      updateHeroTagline("emphasis", e.target.value)
+                    }
                     className="bg-white/50"
                   />
                 </div>
@@ -333,7 +362,9 @@ export default function AdminHomePage() {
                   <Label>Tagline: highlight</Label>
                   <Input
                     value={form.hero.tagline.highlight}
-                    onChange={(e) => updateHeroTagline("highlight", e.target.value)}
+                    onChange={(e) =>
+                      updateHeroTagline("highlight", e.target.value)
+                    }
                     className="bg-white/50"
                   />
                 </div>
@@ -344,7 +375,9 @@ export default function AdminHomePage() {
                   <Label>Описание: main</Label>
                   <Input
                     value={form.hero.description.main}
-                    onChange={(e) => updateHeroDescription("main", e.target.value)}
+                    onChange={(e) =>
+                      updateHeroDescription("main", e.target.value)
+                    }
                     className="bg-white/50"
                   />
                 </div>
@@ -363,7 +396,12 @@ export default function AdminHomePage() {
               <div className="grid gap-3">
                 <div className="flex items-center justify-between">
                   <Label>Прилагательные</Label>
-                  <Button type="button" variant="outline" size="sm" onClick={addAdjective}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addAdjective}
+                  >
                     <Plus className="h-4 w-4 mr-1" />
                     Добавить
                   </Button>
@@ -399,7 +437,9 @@ export default function AdminHomePage() {
                 <Label>Описание: suffix</Label>
                 <Input
                   value={form.hero.description.suffix}
-                  onChange={(e) => updateHeroDescription("suffix", e.target.value)}
+                  onChange={(e) =>
+                    updateHeroDescription("suffix", e.target.value)
+                  }
                   className="bg-white/50"
                 />
               </div>
@@ -440,7 +480,9 @@ export default function AdminHomePage() {
                   <Label>Заголовок: строка 1</Label>
                   <Input
                     value={form.contact.headline.line1}
-                    onChange={(e) => updateContactHeadline("line1", e.target.value)}
+                    onChange={(e) =>
+                      updateContactHeadline("line1", e.target.value)
+                    }
                     className="bg-white/50"
                   />
                 </div>
@@ -448,7 +490,9 @@ export default function AdminHomePage() {
                   <Label>Заголовок: строка 2</Label>
                   <Input
                     value={form.contact.headline.line2}
-                    onChange={(e) => updateContactHeadline("line2", e.target.value)}
+                    onChange={(e) =>
+                      updateContactHeadline("line2", e.target.value)
+                    }
                     className="bg-white/50"
                   />
                 </div>
@@ -482,9 +526,7 @@ export default function AdminHomePage() {
         </div>
       )}
 
-      <Button onClick={handleSave} disabled={saving} className="min-w-[200px]">
-        {saving ? "Сохранение..." : "Сохранить изменения"}
-      </Button>
+      <SaveBar visible={isDirty} saving={saving} onSave={handleSave} />
     </div>
   );
 }

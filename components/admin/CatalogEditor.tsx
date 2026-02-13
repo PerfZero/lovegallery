@@ -4,6 +4,8 @@ import { useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { slugify } from "@/lib/blog-utils";
 import { Button } from "@/components/ui/button";
+import { SaveBar } from "@/components/admin/save-bar";
+import { toast } from "@/components/ui/sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -153,6 +155,41 @@ function splitByComma(value: string): string[] {
     .filter(Boolean);
 }
 
+function buildCatalogPayload(form: CatalogEditorValue): CatalogEditorPayload {
+  return {
+    slug: form.slug.trim(),
+    category: form.category,
+    title: form.title.trim(),
+    artist: form.artist.trim(),
+    price: form.price.trim(),
+    image: form.image.trim(),
+    videoSrc: form.videoSrc.trim(),
+    model3dSrc: form.model3dSrc.trim(),
+    images: form.images,
+    aspectRatio: form.aspectRatio,
+    tags: form.tags,
+    description: form.description.trim(),
+    isNew: form.isNew,
+    status: form.status,
+    sortOrder: form.sortOrder,
+    options: {
+      ...(form.options.sizes.length > 0 ? { sizes: form.options.sizes } : {}),
+      ...(form.options.finishes.length > 0
+        ? { finishes: form.options.finishes }
+        : {}),
+      ...(form.options.fabrics.length > 0
+        ? { fabrics: form.options.fabrics }
+        : {}),
+      ...(Object.keys(form.options.finishImages).length > 0
+        ? { finishImages: form.options.finishImages }
+        : {}),
+      ...(Object.keys(form.options.fabricImages).length > 0
+        ? { fabricImages: form.options.fabricImages }
+        : {}),
+    },
+  };
+}
+
 function ArrayField({
   label,
   value,
@@ -228,6 +265,9 @@ export function CatalogEditor({
 }) {
   const initialValue = useMemo(() => toInitialValue(initial), [initial]);
   const [form, setForm] = useState<CatalogEditorValue>(initialValue);
+  const [savedSnapshot, setSavedSnapshot] = useState(() =>
+    JSON.stringify(buildCatalogPayload(initialValue)),
+  );
   const [saving, setSaving] = useState(false);
   const [uploadingMain, setUploadingMain] = useState(false);
   const [uploadingModel, setUploadingModel] = useState(false);
@@ -488,52 +528,30 @@ export function CatalogEditor({
     const validationError = validate();
     if (validationError) {
       setError(validationError);
+      toast.error(validationError);
       return;
     }
 
-    const payload: CatalogEditorPayload = {
-      slug: form.slug.trim(),
-      category: form.category,
-      title: form.title.trim(),
-      artist: form.artist.trim(),
-      price: form.price.trim(),
-      image: form.image.trim(),
-      videoSrc: form.videoSrc.trim(),
-      model3dSrc: form.model3dSrc.trim(),
-      images: form.images,
-      aspectRatio: form.aspectRatio,
-      tags: form.tags,
-      description: form.description.trim(),
-      isNew: form.isNew,
-      status: form.status,
-      sortOrder: form.sortOrder,
-      options: {
-        ...(form.options.sizes.length > 0 ? { sizes: form.options.sizes } : {}),
-        ...(form.options.finishes.length > 0
-          ? { finishes: form.options.finishes }
-          : {}),
-        ...(form.options.fabrics.length > 0
-          ? { fabrics: form.options.fabrics }
-          : {}),
-        ...(Object.keys(form.options.finishImages).length > 0
-          ? { finishImages: form.options.finishImages }
-          : {}),
-        ...(Object.keys(form.options.fabricImages).length > 0
-          ? { fabricImages: form.options.fabricImages }
-          : {}),
-      },
-    };
+    const payload = buildCatalogPayload(form);
 
     setSaving(true);
     setError("");
     try {
       await onSave(payload);
+      setSavedSnapshot(JSON.stringify(payload));
+      toast.success(isEdit ? "Изменения сохранены" : "Товар создан");
     } catch {
       setError("Не удалось сохранить товар. Попробуйте еще раз.");
+      toast.error("Не удалось сохранить товар");
     } finally {
       setSaving(false);
     }
   };
+
+  const isDirty = useMemo(
+    () => JSON.stringify(buildCatalogPayload(form)) !== savedSnapshot,
+    [form, savedSnapshot],
+  );
 
   return (
     <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 pb-16">
@@ -1093,13 +1111,6 @@ export function CatalogEditor({
             {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
 
             <div className="mt-6 flex flex-wrap items-center gap-2">
-              <Button onClick={handleSave} disabled={saving}>
-                {saving
-                  ? "Сохранение..."
-                  : isEdit
-                    ? "Сохранить изменения"
-                    : "Создать товар"}
-              </Button>
               {onDelete && (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
@@ -1200,6 +1211,13 @@ export function CatalogEditor({
           </CardContent>
         </Card>
       </div>
+
+      <SaveBar
+        visible={isDirty}
+        saving={saving}
+        label={isEdit ? "Сохранить изменения" : "Создать товар"}
+        onSave={handleSave}
+      />
     </div>
   );
 }

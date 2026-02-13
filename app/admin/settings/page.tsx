@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AdminPageHeader } from "@/components/admin/page-header";
 import {
   Card,
@@ -12,14 +12,52 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { SaveBar } from "@/components/admin/save-bar";
+import { toast } from "@/components/ui/sonner";
 import { siteSettings, type SiteSettingsData } from "@/data/site-settings";
 import { cloneSiteSettings, isSiteSettings } from "@/lib/site-settings";
+
+function normalizeSiteSettings(form: SiteSettingsData): SiteSettingsData {
+  return {
+    maintenance: {
+      enabled: form.maintenance.enabled,
+      brandLabel: form.maintenance.brandLabel.trim(),
+      title: form.maintenance.title.trim(),
+      description: form.maintenance.description.trim(),
+    },
+    contacts: {
+      email: form.contacts.email.trim(),
+      phone: form.contacts.phone.trim(),
+      instagram: form.contacts.instagram.trim(),
+      telegram: form.contacts.telegram.trim(),
+      whatsapp: form.contacts.whatsapp.trim(),
+      address: form.contacts.address.trim(),
+      workHoursWeekdays: form.contacts.workHoursWeekdays.trim(),
+      workHoursWeekend: form.contacts.workHoursWeekend.trim(),
+      showroomNote: form.contacts.showroomNote.trim(),
+    },
+    contactPage: {
+      heroBadge: form.contactPage.heroBadge.trim(),
+      heroTitle: form.contactPage.heroTitle.trim(),
+      heroTitleAccent: form.contactPage.heroTitleAccent.trim(),
+      heroDescription: form.contactPage.heroDescription.trim(),
+      infoTitle: form.contactPage.infoTitle.trim(),
+      formTitle: form.contactPage.formTitle.trim(),
+      successTitle: form.contactPage.successTitle.trim(),
+      successDescription: form.contactPage.successDescription.trim(),
+      privacyText: form.contactPage.privacyText.trim(),
+      sendButtonLabel: form.contactPage.sendButtonLabel.trim(),
+    },
+  };
+}
 
 export default function AdminSettingsPage() {
   const [form, setForm] = useState<SiteSettingsData>(
     cloneSiteSettings(siteSettings),
+  );
+  const [savedSnapshot, setSavedSnapshot] = useState(() =>
+    JSON.stringify(normalizeSiteSettings(cloneSiteSettings(siteSettings))),
   );
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -34,7 +72,9 @@ export default function AdminSettingsPage() {
       .then((data) => {
         if (!mounted) return;
         if (!isSiteSettings(data?.item)) return;
-        setForm(cloneSiteSettings(data.item));
+        const nextForm = cloneSiteSettings(data.item);
+        setForm(nextForm);
+        setSavedSnapshot(JSON.stringify(normalizeSiteSettings(nextForm)));
       })
       .catch(() => {
         if (!mounted) return;
@@ -93,37 +133,7 @@ export default function AdminSettingsPage() {
     setError("");
     setSuccess("");
 
-    const normalized: SiteSettingsData = {
-      maintenance: {
-        enabled: form.maintenance.enabled,
-        brandLabel: form.maintenance.brandLabel.trim(),
-        title: form.maintenance.title.trim(),
-        description: form.maintenance.description.trim(),
-      },
-      contacts: {
-        email: form.contacts.email.trim(),
-        phone: form.contacts.phone.trim(),
-        instagram: form.contacts.instagram.trim(),
-        telegram: form.contacts.telegram.trim(),
-        whatsapp: form.contacts.whatsapp.trim(),
-        address: form.contacts.address.trim(),
-        workHoursWeekdays: form.contacts.workHoursWeekdays.trim(),
-        workHoursWeekend: form.contacts.workHoursWeekend.trim(),
-        showroomNote: form.contacts.showroomNote.trim(),
-      },
-      contactPage: {
-        heroBadge: form.contactPage.heroBadge.trim(),
-        heroTitle: form.contactPage.heroTitle.trim(),
-        heroTitleAccent: form.contactPage.heroTitleAccent.trim(),
-        heroDescription: form.contactPage.heroDescription.trim(),
-        infoTitle: form.contactPage.infoTitle.trim(),
-        formTitle: form.contactPage.formTitle.trim(),
-        successTitle: form.contactPage.successTitle.trim(),
-        successDescription: form.contactPage.successDescription.trim(),
-        privacyText: form.contactPage.privacyText.trim(),
-        sendButtonLabel: form.contactPage.sendButtonLabel.trim(),
-      },
-    };
+    const normalized = normalizeSiteSettings(form);
 
     if (!isSiteSettings(normalized)) {
       setError("Проверьте заполненность полей настроек.");
@@ -145,13 +155,18 @@ export default function AdminSettingsPage() {
       }
 
       setForm(cloneSiteSettings(normalized));
+      setSavedSnapshot(JSON.stringify(normalized));
       setSuccess("Настройки сохранены.");
+      toast.success("Настройки сохранены");
     } catch {
       setError("Ошибка сети при сохранении.");
     } finally {
       setSaving(false);
     }
   };
+
+  const normalizedForm = useMemo(() => normalizeSiteSettings(form), [form]);
+  const isDirty = JSON.stringify(normalizedForm) !== savedSnapshot;
 
   if (loading) {
     return <div className="text-sm text-muted-foreground">Загрузка...</div>;
@@ -461,15 +476,12 @@ export default function AdminSettingsPage() {
         </div>
       )}
 
-      <div className="flex justify-end">
-        <Button
-          onClick={handleSave}
-          disabled={saving}
-          className="min-w-[220px]"
-        >
-          {saving ? "Сохранение..." : "Сохранить настройки"}
-        </Button>
-      </div>
+      <SaveBar
+        visible={isDirty}
+        saving={saving}
+        label="Сохранить настройки"
+        onSave={handleSave}
+      />
     </div>
   );
 }

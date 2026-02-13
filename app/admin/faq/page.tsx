@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, Plus, Trash2 } from "lucide-react";
 import { AdminPageHeader } from "@/components/admin/page-header";
 import {
@@ -14,6 +14,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { SaveBar } from "@/components/admin/save-bar";
+import { toast } from "@/components/ui/sonner";
 import {
   Collapsible,
   CollapsibleContent,
@@ -38,8 +40,48 @@ function dedupe(values: string[]): string[] {
   return Array.from(new Set(values));
 }
 
+function normalizeFAQContent(form: FAQContentData): FAQContentData {
+  const rawCategories = form.categories
+    .map((item) => item.trim())
+    .filter(Boolean);
+  const fallbackCategory = rawCategories[0] || "Общее";
+
+  const normalizedItems = form.items
+    .map((item) => ({
+      category: item.category.trim() || fallbackCategory,
+      question: item.question.trim(),
+      answer: item.answer.trim(),
+    }))
+    .filter((item) => item.question && item.answer);
+
+  const categories =
+    rawCategories.length > 0
+      ? dedupe(rawCategories)
+      : dedupe(normalizedItems.map((item) => item.category).filter(Boolean));
+
+  return {
+    hero: {
+      badge: form.hero.badge.trim(),
+      titlePrimary: form.hero.titlePrimary.trim(),
+      titleAccent: form.hero.titleAccent.trim(),
+      description: form.hero.description.trim(),
+    },
+    categories: categories.length > 0 ? categories : ["Общее"],
+    items: normalizedItems,
+    cta: {
+      title: form.cta.title.trim(),
+      description: form.cta.description.trim(),
+      buttonLabel: form.cta.buttonLabel.trim(),
+      buttonHref: form.cta.buttonHref.trim(),
+    },
+  };
+}
+
 export default function AdminFAQPage() {
   const [form, setForm] = useState<FAQContentData>(cloneFAQContent(faqContent));
+  const [savedSnapshot, setSavedSnapshot] = useState(() =>
+    JSON.stringify(normalizeFAQContent(cloneFAQContent(faqContent))),
+  );
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -59,7 +101,9 @@ export default function AdminFAQPage() {
       .then((data) => {
         if (!mounted) return;
         if (!isFAQContent(data?.item)) return;
-        setForm(cloneFAQContent(data.item));
+        const nextForm = cloneFAQContent(data.item);
+        setForm(nextForm);
+        setSavedSnapshot(JSON.stringify(normalizeFAQContent(nextForm)));
       })
       .catch(() => {
         if (!mounted) return;
@@ -85,10 +129,7 @@ export default function AdminFAQPage() {
     );
   };
 
-  const updateHero = (
-    key: keyof FAQContentData["hero"],
-    value: string,
-  ) => {
+  const updateHero = (key: keyof FAQContentData["hero"], value: string) => {
     setForm((prev) => ({ ...prev, hero: { ...prev.hero, [key]: value } }));
   };
 
@@ -115,11 +156,7 @@ export default function AdminFAQPage() {
     }));
   };
 
-  const updateItem = (
-    index: number,
-    key: keyof FAQItem,
-    value: string,
-  ) => {
+  const updateItem = (index: number, key: keyof FAQItem, value: string) => {
     setForm((prev) => {
       const items = [...prev.items];
       items[index] = { ...items[index], [key]: value };
@@ -153,38 +190,7 @@ export default function AdminFAQPage() {
     setError("");
     setSuccess("");
 
-    const rawCategories = form.categories.map((item) => item.trim()).filter(Boolean);
-    const fallbackCategory = rawCategories[0] || "Общее";
-
-    const normalizedItems = form.items
-      .map((item) => ({
-        category: item.category.trim() || fallbackCategory,
-        question: item.question.trim(),
-        answer: item.answer.trim(),
-      }))
-      .filter((item) => item.question && item.answer);
-
-    const categories =
-      rawCategories.length > 0
-        ? dedupe(rawCategories)
-        : dedupe(normalizedItems.map((item) => item.category).filter(Boolean));
-
-    const normalized: FAQContentData = {
-      hero: {
-        badge: form.hero.badge.trim(),
-        titlePrimary: form.hero.titlePrimary.trim(),
-        titleAccent: form.hero.titleAccent.trim(),
-        description: form.hero.description.trim(),
-      },
-      categories: categories.length > 0 ? categories : ["Общее"],
-      items: normalizedItems,
-      cta: {
-        title: form.cta.title.trim(),
-        description: form.cta.description.trim(),
-        buttonLabel: form.cta.buttonLabel.trim(),
-        buttonHref: form.cta.buttonHref.trim(),
-      },
-    };
+    const normalized = normalizeFAQContent(form);
 
     if (!isFAQContent(normalized)) {
       setError("Проверьте заполненность полей FAQ.");
@@ -206,13 +212,18 @@ export default function AdminFAQPage() {
       }
 
       setForm(cloneFAQContent(normalized));
+      setSavedSnapshot(JSON.stringify(normalized));
       setSuccess("Изменения сохранены.");
+      toast.success("Изменения сохранены");
     } catch {
       setError("Ошибка сети при сохранении.");
     } finally {
       setSaving(false);
     }
   };
+
+  const normalizedForm = useMemo(() => normalizeFAQContent(form), [form]);
+  const isDirty = JSON.stringify(normalizedForm) !== savedSnapshot;
 
   if (loading) {
     return <div className="text-sm text-muted-foreground">Загрузка...</div>;
@@ -231,14 +242,21 @@ export default function AdminFAQPage() {
             <CardTitle>Hero</CardTitle>
             <CardDescription>Верхний блок страницы FAQ.</CardDescription>
           </div>
-          <Button type="button" variant="ghost" onClick={() => toggleSection("hero")}>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => toggleSection("hero")}
+          >
             {openSections.hero ? "Свернуть" : "Развернуть"}
             <ChevronDown
               className={`ml-2 h-4 w-4 transition-transform ${openSections.hero ? "rotate-180" : ""}`}
             />
           </Button>
         </CardHeader>
-        <Collapsible open={openSections.hero} onOpenChange={() => toggleSection("hero")}>
+        <Collapsible
+          open={openSections.hero}
+          onOpenChange={() => toggleSection("hero")}
+        >
           <CollapsibleContent>
             <CardContent className="space-y-4">
               <div className="grid md:grid-cols-2 gap-4">
@@ -284,7 +302,9 @@ export default function AdminFAQPage() {
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle>Категории</CardTitle>
-            <CardDescription>Кнопки фильтра над списком вопросов.</CardDescription>
+            <CardDescription>
+              Кнопки фильтра над списком вопросов.
+            </CardDescription>
           </div>
           <div className="flex items-center gap-2">
             <Button type="button" variant="outline" onClick={addCategory}>
@@ -343,7 +363,11 @@ export default function AdminFAQPage() {
               <Plus className="mr-2 h-4 w-4" />
               Добавить вопрос
             </Button>
-            <Button type="button" variant="ghost" onClick={() => toggleSection("items")}>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => toggleSection("items")}
+            >
               {openSections.items ? "Свернуть" : "Развернуть"}
               <ChevronDown
                 className={`ml-2 h-4 w-4 transition-transform ${openSections.items ? "rotate-180" : ""}`}
@@ -351,12 +375,18 @@ export default function AdminFAQPage() {
             </Button>
           </div>
         </CardHeader>
-        <Collapsible open={openSections.items} onOpenChange={() => toggleSection("items")}>
+        <Collapsible
+          open={openSections.items}
+          onOpenChange={() => toggleSection("items")}
+        >
           <CollapsibleContent>
             <CardContent className="space-y-4">
               <datalist id="faq-categories-list">
                 {form.categories.filter(Boolean).map((category, index) => (
-                  <option key={`faq-category-option-${index}`} value={category} />
+                  <option
+                    key={`faq-category-option-${index}`}
+                    value={category}
+                  />
                 ))}
               </datalist>
               {form.items.map((item, index) => {
@@ -441,16 +471,25 @@ export default function AdminFAQPage() {
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle>CTA</CardTitle>
-            <CardDescription>Блок внизу FAQ («Не нашли ответ?»).</CardDescription>
+            <CardDescription>
+              Блок внизу FAQ («Не нашли ответ?»).
+            </CardDescription>
           </div>
-          <Button type="button" variant="ghost" onClick={() => toggleSection("cta")}>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => toggleSection("cta")}
+          >
             {openSections.cta ? "Свернуть" : "Развернуть"}
             <ChevronDown
               className={`ml-2 h-4 w-4 transition-transform ${openSections.cta ? "rotate-180" : ""}`}
             />
           </Button>
         </CardHeader>
-        <Collapsible open={openSections.cta} onOpenChange={() => toggleSection("cta")}>
+        <Collapsible
+          open={openSections.cta}
+          onOpenChange={() => toggleSection("cta")}
+        >
           <CollapsibleContent>
             <CardContent className="space-y-4">
               <div className="grid gap-2">
@@ -504,11 +543,7 @@ export default function AdminFAQPage() {
         </div>
       )}
 
-      <div className="flex justify-end">
-        <Button onClick={handleSave} disabled={saving}>
-          {saving ? "Сохранение..." : "Сохранить изменения"}
-        </Button>
-      </div>
+      <SaveBar visible={isDirty} saving={saving} onSave={handleSave} />
     </div>
   );
 }

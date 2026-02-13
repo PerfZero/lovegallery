@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { ChevronDown, Plus, Trash2 } from "lucide-react";
 import { AdminPageHeader } from "@/components/admin/page-header";
@@ -15,6 +15,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { SaveBar } from "@/components/admin/save-bar";
+import { toast } from "@/components/ui/sonner";
 import {
   Collapsible,
   CollapsibleContent,
@@ -50,9 +52,29 @@ function makeEmptyAlphabetItem(): AboutAlphabetItem {
   };
 }
 
+function normalizeAboutContent(form: AboutContent): AboutContent {
+  return {
+    ...form,
+    categories: form.categories.map((item) => ({
+      ...item,
+      href: item.href?.trim() || undefined,
+    })),
+    alphabet: form.alphabet.map((item) => ({
+      ...item,
+      video: item.video?.trim() || undefined,
+      caption: item.caption?.trim() || undefined,
+      captionLinkLabel: item.captionLinkLabel?.trim() || undefined,
+      captionLinkHref: item.captionLinkHref?.trim() || undefined,
+    })),
+  };
+}
+
 export default function AdminAboutPage() {
   const [form, setForm] = useState<AboutContent>(
     cloneAboutContent(aboutContent),
+  );
+  const [savedSnapshot, setSavedSnapshot] = useState(() =>
+    JSON.stringify(normalizeAboutContent(cloneAboutContent(aboutContent))),
   );
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -72,7 +94,9 @@ export default function AdminAboutPage() {
         if (!mounted) return;
         const incoming = data?.item;
         if (!isAboutContent(incoming)) return;
-        setForm(cloneAboutContent(incoming));
+        const nextForm = cloneAboutContent(incoming);
+        setForm(nextForm);
+        setSavedSnapshot(JSON.stringify(normalizeAboutContent(nextForm)));
       })
       .catch(() => {
         if (!mounted) return;
@@ -299,20 +323,7 @@ export default function AdminAboutPage() {
     setError("");
     setSuccess("");
 
-    const normalized: AboutContent = {
-      ...form,
-      categories: form.categories.map((item) => ({
-        ...item,
-        href: item.href?.trim() || undefined,
-      })),
-      alphabet: form.alphabet.map((item) => ({
-        ...item,
-        video: item.video?.trim() || undefined,
-        caption: item.caption?.trim() || undefined,
-        captionLinkLabel: item.captionLinkLabel?.trim() || undefined,
-        captionLinkHref: item.captionLinkHref?.trim() || undefined,
-      })),
-    };
+    const normalized = normalizeAboutContent(form);
 
     if (!isAboutContent(normalized)) {
       setError(
@@ -337,13 +348,18 @@ export default function AdminAboutPage() {
       }
 
       setForm(cloneAboutContent(normalized));
+      setSavedSnapshot(JSON.stringify(normalized));
       setSuccess("Изменения сохранены.");
+      toast.success("Изменения сохранены");
     } catch {
       setError("Ошибка сети при сохранении.");
     } finally {
       setSaving(false);
     }
   };
+
+  const normalizedForm = useMemo(() => normalizeAboutContent(form), [form]);
+  const isDirty = JSON.stringify(normalizedForm) !== savedSnapshot;
 
   if (loading) {
     return <div className="text-sm text-muted-foreground">Загрузка...</div>;
@@ -951,11 +967,7 @@ export default function AdminAboutPage() {
         </div>
       )}
 
-      <div className="flex justify-end">
-        <Button onClick={handleSave} disabled={saving}>
-          {saving ? "Сохранение..." : "Сохранить изменения"}
-        </Button>
-      </div>
+      <SaveBar visible={isDirty} saving={saving} onSave={handleSave} />
     </div>
   );
 }
