@@ -202,7 +202,7 @@ const GalleryCarousel = () => {
     <section
       ref={sectionRef}
       style={{ overflowAnchor: "none" }}
-      className={`h-[40vh] md:h-[50vh] flex items-start select-none pb-4 md:pb-6 w-full transition-all duration-700 pointer-events-auto ${isPreloading ? "overflow-visible" : "overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"} touch-pan-x overscroll-x-contain snap-none md:cursor-grab`}
+      className={`h-[40vh] md:h-[70vh] flex items-start select-none pb-4 md:pb-6 w-full transition-all duration-700 pointer-events-auto ${isPreloading ? "overflow-visible" : "overflow-x-hidden"} snap-none`}
     >
       <div className="relative flex w-full">
         <div
