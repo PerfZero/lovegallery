@@ -49,9 +49,50 @@ function sanitizeOptions(value: unknown): ArtworkOptions | undefined {
   const fabrics = Array.isArray(raw.fabrics)
     ? raw.fabrics.filter((x): x is string => typeof x === "string")
     : undefined;
+  const finishImages =
+    raw.finishImages && typeof raw.finishImages === "object"
+      ? Object.fromEntries(
+          Object.entries(raw.finishImages as Record<string, unknown>).flatMap(
+            ([key, val]) => {
+              if (typeof key !== "string" || typeof val !== "string") return [];
+              const normalizedKey = key.trim();
+              const normalizedVal = val.trim();
+              if (!normalizedKey || !normalizedVal) return [];
+              return [[normalizedKey, normalizedVal]];
+            },
+          ),
+        )
+      : undefined;
+  const fabricImages =
+    raw.fabricImages && typeof raw.fabricImages === "object"
+      ? Object.fromEntries(
+          Object.entries(raw.fabricImages as Record<string, unknown>).flatMap(
+            ([key, val]) => {
+              if (typeof key !== "string" || typeof val !== "string") return [];
+              const normalizedKey = key.trim();
+              const normalizedVal = val.trim();
+              if (!normalizedKey || !normalizedVal) return [];
+              return [[normalizedKey, normalizedVal]];
+            },
+          ),
+        )
+      : undefined;
 
-  if (!sizes && !finishes && !fabrics) return undefined;
-  return { sizes, finishes, fabrics };
+  if (!sizes && !finishes && !fabrics && !finishImages && !fabricImages) {
+    return undefined;
+  }
+
+  return {
+    ...(sizes ? { sizes } : {}),
+    ...(finishes ? { finishes } : {}),
+    ...(fabrics ? { fabrics } : {}),
+    ...(finishImages && Object.keys(finishImages).length > 0
+      ? { finishImages }
+      : {}),
+    ...(fabricImages && Object.keys(fabricImages).length > 0
+      ? { fabricImages }
+      : {}),
+  };
 }
 
 function isCatalogCategory(value: string): value is CatalogCategory {

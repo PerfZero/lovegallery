@@ -1,6 +1,7 @@
 "use client";
 
 import { Ruler, Info, HelpCircle } from "lucide-react";
+import Image from "next/image";
 import { DSLabel, DSText } from "@/components/ui/design-system";
 import {
   Popover,
@@ -8,7 +9,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { type Artwork } from "@/data/artworks";
-import Link from "next/link";
 import React from "react";
 
 interface ProductConfiguratorProps {
@@ -47,6 +47,12 @@ export const ProductConfigurator = ({
   setSelectedFabric,
 }: ProductConfiguratorProps) => {
   const isPetFurniture = artwork.category === "pet-furniture";
+  const selectedFinishImage = selectedFinish
+    ? artwork.options?.finishImages?.[selectedFinish]
+    : undefined;
+  const selectedFabricImage = selectedFabric
+    ? artwork.options?.fabricImages?.[selectedFabric]
+    : undefined;
 
   // Default art sizes if none in artwork
   const defaultSizes = ["40*60", "50*70", "70*100", "150*200", "200*400"];
@@ -117,6 +123,22 @@ export const ProductConfigurator = ({
                 </button>
               ))}
             </div>
+            {selectedFinishImage && (
+              <div className="space-y-2">
+                <DSText size="sm" className="text-muted-foreground">
+                  Выбранная отделка: {selectedFinish}
+                </DSText>
+                <div className="relative w-full max-w-[260px] aspect-[4/3] overflow-hidden border border-border/20">
+                  <Image
+                    src={selectedFinishImage}
+                    alt={selectedFinish || "Отделка"}
+                    fill
+                    sizes="260px"
+                    className="object-cover"
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="space-y-4">
@@ -136,6 +158,22 @@ export const ProductConfigurator = ({
                 </button>
               ))}
             </div>
+            {selectedFabricImage && (
+              <div className="space-y-2">
+                <DSText size="sm" className="text-muted-foreground">
+                  Выбранная ткань: {selectedFabric}
+                </DSText>
+                <div className="relative w-full max-w-[260px] aspect-[4/3] overflow-hidden border border-border/20">
+                  <Image
+                    src={selectedFabricImage}
+                    alt={selectedFabric || "Ткань"}
+                    fill
+                    sizes="260px"
+                    className="object-cover"
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </>
       ) : (

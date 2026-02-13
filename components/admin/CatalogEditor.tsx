@@ -41,11 +41,15 @@ import {
 
 type AspectRatio = "portrait" | "square" | "landscape";
 type CatalogStatus = "active" | "draft" | "archived";
+type OptionArrayKey = "sizes" | "finishes" | "fabrics";
+type OptionImageKey = "finishImages" | "fabricImages";
 
 export type CatalogOptions = {
   sizes: string[];
   finishes: string[];
   fabrics: string[];
+  finishImages: Record<string, string>;
+  fabricImages: Record<string, string>;
 };
 
 export type CatalogEditorValue = {
@@ -86,6 +90,11 @@ export type CatalogEditorPayload = {
   options: Partial<CatalogOptions>;
 };
 
+type PendingOptionImageTarget = {
+  key: OptionImageKey;
+  optionValue: string;
+};
+
 const EMPTY_VALUE: CatalogEditorValue = {
   slug: "",
   category: "painting",
@@ -106,6 +115,8 @@ const EMPTY_VALUE: CatalogEditorValue = {
     sizes: [],
     finishes: [],
     fabrics: [],
+    finishImages: {},
+    fabricImages: {},
   },
 };
 
@@ -129,6 +140,8 @@ function toInitialValue(
       sizes: initial?.options?.sizes || [],
       finishes: initial?.options?.finishes || [],
       fabrics: initial?.options?.fabrics || [],
+      finishImages: initial?.options?.finishImages || {},
+      fabricImages: initial?.options?.fabricImages || {},
     },
   };
 }
@@ -219,11 +232,15 @@ export function CatalogEditor({
   const [uploadingMain, setUploadingMain] = useState(false);
   const [uploadingModel, setUploadingModel] = useState(false);
   const [uploadingGallery, setUploadingGallery] = useState(false);
+  const [uploadingOptionImage, setUploadingOptionImage] = useState(false);
+  const [pendingOptionImageTarget, setPendingOptionImageTarget] =
+    useState<PendingOptionImageTarget | null>(null);
   const [error, setError] = useState("");
   const [slugTouched, setSlugTouched] = useState(Boolean(initialValue.slug));
   const mainUploadRef = useRef<HTMLInputElement | null>(null);
   const modelUploadRef = useRef<HTMLInputElement | null>(null);
   const galleryUploadRef = useRef<HTMLInputElement | null>(null);
+  const optionImageUploadRef = useRef<HTMLInputElement | null>(null);
 
   const isEdit = Boolean(initial?.slug);
   const categoryLabel =
@@ -237,10 +254,40 @@ export function CatalogEditor({
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  const updateOption = (key: keyof CatalogOptions, value: string[]) => {
+  const updateOption = (key: OptionArrayKey, value: string[]) => {
+    setForm((prev) => {
+      const nextOptions: CatalogOptions = { ...prev.options, [key]: value };
+
+      if (key === "finishes") {
+        nextOptions.finishImages = Object.fromEntries(
+          Object.entries(prev.options.finishImages).filter(([label]) =>
+            value.includes(label),
+          ),
+        );
+      }
+
+      if (key === "fabrics") {
+        nextOptions.fabricImages = Object.fromEntries(
+          Object.entries(prev.options.fabricImages).filter(([label]) =>
+            value.includes(label),
+          ),
+        );
+      }
+
+      return {
+        ...prev,
+        options: nextOptions,
+      };
+    });
+  };
+
+  const updateOptionImages = (
+    key: OptionImageKey,
+    nextMap: Record<string, string>,
+  ) => {
     setForm((prev) => ({
       ...prev,
-      options: { ...prev.options, [key]: value },
+      options: { ...prev.options, [key]: nextMap },
     }));
   };
 
@@ -351,6 +398,57 @@ export function CatalogEditor({
     }
   };
 
+  const requestOptionImageUpload = (
+    key: OptionImageKey,
+    optionValue: string,
+  ) => {
+    setPendingOptionImageTarget({ key, optionValue });
+    optionImageUploadRef.current?.click();
+  };
+
+  const handleOptionImageUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || !pendingOptionImageTarget) {
+      setPendingOptionImageTarget(null);
+      return;
+    }
+
+    setUploadingOptionImage(true);
+    setError("");
+    try {
+      const result = await uploadSingleFile(file);
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+      const uploadedUrl = result.url;
+      if (!uploadedUrl) {
+        setError("Не удалось загрузить изображение варианта.");
+        return;
+      }
+
+      const { key, optionValue } = pendingOptionImageTarget;
+      setForm((prev) => ({
+        ...prev,
+        options: {
+          ...prev.options,
+          [key]: {
+            ...prev.options[key],
+            [optionValue]: uploadedUrl,
+          },
+        },
+      }));
+    } catch {
+      setError("Ошибка при загрузке изображения варианта.");
+    } finally {
+      setUploadingOptionImage(false);
+      setPendingOptionImageTarget(null);
+    }
+  };
+
   const handleModelUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
@@ -416,6 +514,12 @@ export function CatalogEditor({
           : {}),
         ...(form.options.fabrics.length > 0
           ? { fabrics: form.options.fabrics }
+          : {}),
+        ...(Object.keys(form.options.finishImages).length > 0
+          ? { finishImages: form.options.finishImages }
+          : {}),
+        ...(Object.keys(form.options.fabricImages).length > 0
+          ? { fabricImages: form.options.fabricImages }
           : {}),
       },
     };
@@ -725,6 +829,13 @@ export function CatalogEditor({
 
               <TabsContent value="details" className="space-y-4">
                 {error && <p className="text-sm text-red-600">{error}</p>}
+                <input
+                  ref={optionImageUploadRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleOptionImageUpload}
+                />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2 md:col-span-2">
@@ -801,12 +912,180 @@ export function CatalogEditor({
                     placeholder="Например: Дуб"
                   />
 
+                  {form.options.finishes.length > 0 && (
+                    <div className="space-y-3 md:col-span-2">
+                      <Label>Фото для отделок</Label>
+                      <div className="space-y-2">
+                        {form.options.finishes.map((finish) => {
+                          const imageUrl = form.options.finishImages[finish];
+                          return (
+                            <div
+                              key={finish}
+                              className="flex items-center gap-3 rounded-md border border-border/40 p-2"
+                            >
+                              <div className="relative h-12 w-12 overflow-hidden rounded border border-border/40 bg-secondary/30">
+                                {imageUrl ? (
+                                  <Image
+                                    src={imageUrl}
+                                    alt={finish}
+                                    fill
+                                    sizes="48px"
+                                    className="object-cover"
+                                  />
+                                ) : (
+                                  <div className="h-full w-full grid place-items-center text-[10px] text-muted-foreground">
+                                    Нет фото
+                                  </div>
+                                )}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-medium truncate">
+                                  {finish}
+                                </p>
+                                {imageUrl && (
+                                  <p className="text-xs text-muted-foreground truncate">
+                                    {imageUrl}
+                                  </p>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  disabled={uploadingOptionImage}
+                                  onClick={() =>
+                                    requestOptionImageUpload(
+                                      "finishImages",
+                                      finish,
+                                    )
+                                  }
+                                >
+                                  {uploadingOptionImage &&
+                                  pendingOptionImageTarget?.key ===
+                                    "finishImages" &&
+                                  pendingOptionImageTarget?.optionValue ===
+                                    finish
+                                    ? "Загрузка..."
+                                    : imageUrl
+                                      ? "Заменить"
+                                      : "Загрузить"}
+                                </Button>
+                                {imageUrl && (
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => {
+                                      const nextMap = {
+                                        ...form.options.finishImages,
+                                      };
+                                      delete nextMap[finish];
+                                      updateOptionImages(
+                                        "finishImages",
+                                        nextMap,
+                                      );
+                                    }}
+                                  >
+                                    Удалить
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
                   <ArrayField
                     label="Ткани"
                     value={form.options.fabrics}
                     onChange={(next) => updateOption("fabrics", next)}
                     placeholder="Например: Ткань 1"
                   />
+
+                  {form.options.fabrics.length > 0 && (
+                    <div className="space-y-3 md:col-span-2">
+                      <Label>Фото для тканей</Label>
+                      <div className="space-y-2">
+                        {form.options.fabrics.map((fabric) => {
+                          const imageUrl = form.options.fabricImages[fabric];
+                          return (
+                            <div
+                              key={fabric}
+                              className="flex items-center gap-3 rounded-md border border-border/40 p-2"
+                            >
+                              <div className="relative h-12 w-12 overflow-hidden rounded border border-border/40 bg-secondary/30">
+                                {imageUrl ? (
+                                  <Image
+                                    src={imageUrl}
+                                    alt={fabric}
+                                    fill
+                                    sizes="48px"
+                                    className="object-cover"
+                                  />
+                                ) : (
+                                  <div className="h-full w-full grid place-items-center text-[10px] text-muted-foreground">
+                                    Нет фото
+                                  </div>
+                                )}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-medium truncate">
+                                  {fabric}
+                                </p>
+                                {imageUrl && (
+                                  <p className="text-xs text-muted-foreground truncate">
+                                    {imageUrl}
+                                  </p>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  disabled={uploadingOptionImage}
+                                  onClick={() =>
+                                    requestOptionImageUpload(
+                                      "fabricImages",
+                                      fabric,
+                                    )
+                                  }
+                                >
+                                  {uploadingOptionImage &&
+                                  pendingOptionImageTarget?.key ===
+                                    "fabricImages" &&
+                                  pendingOptionImageTarget?.optionValue ===
+                                    fabric
+                                    ? "Загрузка..."
+                                    : imageUrl
+                                      ? "Заменить"
+                                      : "Загрузить"}
+                                </Button>
+                                {imageUrl && (
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => {
+                                      const nextMap = {
+                                        ...form.options.fabricImages,
+                                      };
+                                      delete nextMap[fabric];
+                                      updateOptionImages(
+                                        "fabricImages",
+                                        nextMap,
+                                      );
+                                    }}
+                                  >
+                                    Удалить
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </TabsContent>
             </Tabs>

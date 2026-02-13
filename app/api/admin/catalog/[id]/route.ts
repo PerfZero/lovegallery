@@ -33,14 +33,44 @@ function toStringArray(value: unknown): string[] {
   return [];
 }
 
-function normalizeOptions(value: unknown): Record<string, string[]> | null {
+function toStringMap(value: unknown): Record<string, string> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    Object.entries(value as Record<string, unknown>).flatMap(([key, val]) => {
+      if (typeof val !== "string") return [];
+      const normalizedKey = key.trim();
+      const normalizedVal = val.trim();
+      if (!normalizedKey || !normalizedVal) return [];
+      return [[normalizedKey, normalizedVal]];
+    }),
+  );
+}
+
+function normalizeOptions(value: unknown): {
+  sizes?: string[];
+  finishes?: string[];
+  fabrics?: string[];
+  finishImages?: Record<string, string>;
+  fabricImages?: Record<string, string>;
+} | null {
   if (!value || typeof value !== "object") return null;
   const raw = value as Record<string, unknown>;
   const sizes = toStringArray(raw.sizes);
   const finishes = toStringArray(raw.finishes);
   const fabrics = toStringArray(raw.fabrics);
+  const finishImages = toStringMap(raw.finishImages);
+  const fabricImages = toStringMap(raw.fabricImages);
 
-  if (sizes.length === 0 && finishes.length === 0 && fabrics.length === 0) {
+  if (
+    sizes.length === 0 &&
+    finishes.length === 0 &&
+    fabrics.length === 0 &&
+    Object.keys(finishImages).length === 0 &&
+    Object.keys(fabricImages).length === 0
+  ) {
     return null;
   }
 
@@ -48,6 +78,8 @@ function normalizeOptions(value: unknown): Record<string, string[]> | null {
     ...(sizes.length > 0 ? { sizes } : {}),
     ...(finishes.length > 0 ? { finishes } : {}),
     ...(fabrics.length > 0 ? { fabrics } : {}),
+    ...(Object.keys(finishImages).length > 0 ? { finishImages } : {}),
+    ...(Object.keys(fabricImages).length > 0 ? { fabricImages } : {}),
   };
 }
 

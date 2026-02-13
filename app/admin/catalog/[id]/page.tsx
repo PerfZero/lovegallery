@@ -29,6 +29,8 @@ type ApiCatalogItem = {
     sizes?: string[];
     finishes?: string[];
     fabrics?: string[];
+    finishImages?: Record<string, string>;
+    fabricImages?: Record<string, string>;
   };
   status: "active" | "draft" | "archived";
   sortOrder: number;
@@ -55,6 +57,8 @@ function mapToEditorValue(item: ApiCatalogItem): CatalogEditorValue {
       sizes: item.options?.sizes || [],
       finishes: item.options?.finishes || [],
       fabrics: item.options?.fabrics || [],
+      finishImages: item.options?.finishImages || {},
+      fabricImages: item.options?.fabricImages || {},
     },
   };
 }
