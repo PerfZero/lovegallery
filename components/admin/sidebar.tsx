@@ -12,6 +12,10 @@ import {
   Inbox,
   ExternalLink,
   User,
+  Info,
+  HandCoins,
+  CircleHelp,
+  SlidersHorizontal,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -40,6 +44,26 @@ const menuItems = [
     title: "Блог",
     href: "/admin/blog",
     icon: BookOpen,
+  },
+  {
+    title: "О нас",
+    href: "/admin/about",
+    icon: Info,
+  },
+  {
+    title: "Оплата и доставка",
+    href: "/admin/payment-delivery",
+    icon: HandCoins,
+  },
+  {
+    title: "FAQ",
+    href: "/admin/faq",
+    icon: CircleHelp,
+  },
+  {
+    title: "Каталог (страницы)",
+    href: "/admin/catalog-content",
+    icon: SlidersHorizontal,
   },
 ];
 
@@ -98,19 +122,6 @@ export function AdminSidebar() {
 
         <div className="mt-auto pt-4 space-y-4">
           {/* User Profile Info */}
-          <div className="px-3 border-t border-border/40 pt-6 mb-4">
-            <div className="flex items-center gap-3 p-2 rounded-xl bg-secondary/20">
-              <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center text-accent">
-                <User size={20} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold truncate">Администратор</p>
-                <p className="text-[10px] text-muted-foreground truncate uppercase tracking-widest">
-                  Premium Access
-                </p>
-              </div>
-            </div>
-          </div>
 
           <ul className="space-y-2 font-medium px-3">
             <li>

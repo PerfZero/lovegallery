@@ -65,6 +65,20 @@ export async function POST(req: Request) {
     return NextResponse.json({ url: `/uploads/${name}` });
   } catch (err) {
     console.error(err);
-    return NextResponse.json({ error: "Upload failed" }, { status: 500 });
+    const message =
+      err instanceof Error ? err.message : "Неизвестная ошибка загрузки";
+    if (
+      message.toLowerCase().includes("body") &&
+      message.includes("exceeded")
+    ) {
+      return NextResponse.json(
+        { error: "Файл слишком большой для загрузки." },
+        { status: 413 },
+      );
+    }
+    return NextResponse.json(
+      { error: `Upload failed: ${message}` },
+      { status: 500 },
+    );
   }
 }

@@ -3,42 +3,46 @@
 import { motion } from "framer-motion";
 import {
   DSHeading,
-  DSText,
   DSContainer,
   DSDecorativeAsterisk,
 } from "@/components/ui/design-system";
-import { categoryThemes } from "@/data/artworks";
-import { catalogContent } from "@/data/catalog";
+import {
+  type CatalogCategoryId,
+  type CatalogCategoryPageItem,
+  type CatalogPageCategoryItem,
+} from "@/data/catalog-page-content";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 interface CategoryHeaderProps {
-  category: keyof typeof categoryThemes;
+  categoryId: CatalogCategoryId;
+  categoryPage: CatalogCategoryPageItem;
+  catalogCategory?: CatalogPageCategoryItem;
 }
 
-export const CategoryHeader = ({ category }: CategoryHeaderProps) => {
-  const theme = categoryThemes[category];
-  const catalogVideo = catalogContent.categories.find(
-    (c) => c.id === category,
-  )?.videoSrc;
+export const CategoryHeader = ({
+  categoryId,
+  categoryPage,
+  catalogCategory,
+}: CategoryHeaderProps) => {
   const backgroundVideo =
-    catalogVideo ||
-    (category === "collections" ? "/videos/colection.mp4" : undefined);
+    categoryPage.backgroundVideoSrc ||
+    catalogCategory?.videoSrc ||
+    (categoryId === "collections" ? "/videos/colection.mp4" : undefined);
 
   return (
     <section className="pt-40 pb-20 relative">
       <div
         className={cn(
           "flex flex-col items-center text-center max-w-4xl mx-auto px-6 relative",
-          category === "collections" &&
+          categoryId === "collections" &&
             "md:items-start md:text-left md:max-w-5xl",
         )}
       >
-        {/* Decorative Background Title for Collections */}
-        {category === "collections" && (
+        {categoryId === "collections" && (
           <div className="absolute top-0 left-0 -translate-y-12 md:-translate-y-24 -translate-x-8 md:-translate-x-12 pointer-events-none select-none overflow-hidden w-full h-[300px]">
             <span className="text-[12rem] md:text-[18rem] font-display italic font-light text-foreground/[0.03] leading-none whitespace-nowrap">
-              {theme.title}
+              {categoryPage.navTitle}
             </span>
           </div>
         )}
@@ -47,13 +51,10 @@ export const CategoryHeader = ({ category }: CategoryHeaderProps) => {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className={cn(
-            "mb-4",
-            category === "collections" && "md:ml-24", // Offset smaller title
-          )}
+          className={cn("mb-4", categoryId === "collections" && "md:ml-24")}
         >
           <span className="text-[10px] tracking-[0.4em] uppercase font-medium text-muted-foreground">
-            {theme.title}
+            {categoryPage.navTitle}
           </span>
         </motion.div>
 
@@ -63,23 +64,23 @@ export const CategoryHeader = ({ category }: CategoryHeaderProps) => {
           transition={{ duration: 0.8, delay: 0.1 }}
           className={cn(
             "space-y-8 relative z-10",
-            category === "collections" && "md:ml-48 mt-4", // Increased distance to avoid overlap
+            categoryId === "collections" && "md:ml-48 mt-4",
           )}
         >
           <DSHeading
             level="h1"
             className={cn(
               "text-3xl md:text-5xl lg:text-5xl tracking-widest uppercase font-light leading-tight",
-              category === "collections" && "max-w-2xl",
+              categoryId === "collections" && "max-w-2xl",
             )}
           >
-            {theme.subtitle}
+            {categoryPage.headline}
           </DSHeading>
 
           <DSDecorativeAsterisk
             className={cn(
               "mx-auto opacity-20",
-              category === "collections" && "md:mx-0",
+              categoryId === "collections" && "md:mx-0",
             )}
           />
         </motion.div>
@@ -90,24 +91,25 @@ export const CategoryHeader = ({ category }: CategoryHeaderProps) => {
           <div
             className={cn(
               "flex justify-center flex-wrap gap-y-12 gap-x-8 md:gap-x-24 text-[9px] tracking-[0.3em] uppercase font-semibold text-muted-foreground",
-              category === "collections" && "max-w-5xl mx-auto",
+              categoryId === "collections" && "max-w-5xl mx-auto",
             )}
           >
-            {theme.subnav.map((item, index) => {
-              const label = typeof item === "string" ? item : item.label;
-              const href = typeof item === "string" ? null : item.href;
-
+            {categoryPage.subnav.map((item, index) => {
+              const href = item.href?.trim() || "";
               const content = (
                 <>
-                  {label}
+                  {item.label}
                   <span
-                    className={`absolute -bottom-1 left-0 w-full h-px bg-foreground transition-transform origin-left ${index === 0 && category !== "collections" ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"}`}
+                    className={`absolute -bottom-1 left-0 w-full h-px bg-foreground transition-transform origin-left ${
+                      index === 0 && categoryId !== "collections"
+                        ? "scale-x-100"
+                        : "scale-x-0 group-hover:scale-x-100"
+                    }`}
                   />
                 </>
               );
 
-              // Artistically staggered layout for collections
-              const isCollections = category === "collections";
+              const isCollections = categoryId === "collections";
               const className = cn(
                 "hover:text-foreground transition-colors relative group py-2",
                 !isCollections && index === 0 ? "text-foreground" : "",
@@ -122,14 +124,14 @@ export const CategoryHeader = ({ category }: CategoryHeaderProps) => {
 
               if (href) {
                 return (
-                  <Link key={label} href={href} className={className}>
+                  <Link key={`${item.label}-${index}`} href={href} className={className}>
                     {content}
                   </Link>
                 );
               }
 
               return (
-                <button key={label} className={className}>
+                <button key={`${item.label}-${index}`} className={className}>
                   {content}
                 </button>
               );
@@ -138,12 +140,10 @@ export const CategoryHeader = ({ category }: CategoryHeaderProps) => {
         </DSContainer>
       </div>
 
-      {/* Ambient Background */}
       <div
-        className={`absolute inset-0 bg-gradient-to-b ${theme.accentColor} -z-10`}
+        className={`absolute inset-0 bg-gradient-to-b ${categoryPage.accentColor} -z-10`}
       />
 
-      {/* Background Video */}
       {backgroundVideo && (
         <div className="absolute inset-0 -z-20 overflow-hidden">
           <video
@@ -155,7 +155,6 @@ export const CategoryHeader = ({ category }: CategoryHeaderProps) => {
           >
             <source src={backgroundVideo} type="video/mp4" />
           </video>
-          {/* Extra overlay for depth and readability */}
           <div className="absolute inset-0 bg-background/20 backdrop-blur-[2px]" />
         </div>
       )}

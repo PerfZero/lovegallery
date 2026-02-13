@@ -1,6 +1,14 @@
 import Database from "better-sqlite3";
 import fs from "fs";
 import path from "path";
+import { type AboutContent } from "@/data/about-content";
+import { type CatalogPageContentData } from "@/data/catalog-page-content";
+import { type FAQContentData } from "@/data/faq-content";
+import { type PaymentDeliveryContentData } from "@/data/payment-delivery-content";
+import { resolveAboutContent } from "@/lib/about-content";
+import { resolveCatalogPageContent } from "@/lib/catalog-page-content";
+import { resolveFAQContent } from "@/lib/faq-content";
+import { resolvePaymentDeliveryContent } from "@/lib/payment-delivery-content";
 
 const DB_PATH =
   process.env.ADMIN_DB_PATH || path.join(process.cwd(), "data", "app.db");
@@ -81,6 +89,12 @@ const SCHEMA_SQL = `
     status TEXT NOT NULL DEFAULT 'active',
     sort_order INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS site_content (
+    key TEXT PRIMARY KEY,
+    value_json TEXT NOT NULL,
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
 `;
@@ -624,6 +638,137 @@ export function updateCatalogItem(
 
 export function deleteCatalogItem(id: number) {
   return db.prepare(`DELETE FROM catalog_items WHERE id = ?`).run(id);
+}
+
+const ABOUT_CONTENT_KEY = "about_page_content";
+const CATALOG_PAGE_CONTENT_KEY = "catalog_page_content";
+const FAQ_CONTENT_KEY = "faq_page_content";
+const PAYMENT_DELIVERY_CONTENT_KEY = "payment_delivery_page_content";
+
+export function getAboutContent(): AboutContent {
+  const row = db
+    .prepare(`SELECT value_json FROM site_content WHERE key = ?`)
+    .get(ABOUT_CONTENT_KEY) as { value_json?: string } | undefined;
+
+  if (!row?.value_json) {
+    return resolveAboutContent(null);
+  }
+
+  try {
+    return resolveAboutContent(JSON.parse(row.value_json));
+  } catch {
+    return resolveAboutContent(null);
+  }
+}
+
+export function saveAboutContent(content: AboutContent) {
+  return db
+    .prepare(
+      `INSERT INTO site_content (key, value_json, updated_at)
+       VALUES (@key, @value_json, datetime('now'))
+       ON CONFLICT(key) DO UPDATE SET
+         value_json = excluded.value_json,
+         updated_at = datetime('now')`,
+    )
+    .run({
+      key: ABOUT_CONTENT_KEY,
+      value_json: JSON.stringify(content),
+    });
+}
+
+export function getCatalogPageContent(): CatalogPageContentData {
+  const row = db
+    .prepare(`SELECT value_json FROM site_content WHERE key = ?`)
+    .get(CATALOG_PAGE_CONTENT_KEY) as { value_json?: string } | undefined;
+
+  if (!row?.value_json) {
+    return resolveCatalogPageContent(null);
+  }
+
+  try {
+    return resolveCatalogPageContent(JSON.parse(row.value_json));
+  } catch {
+    return resolveCatalogPageContent(null);
+  }
+}
+
+export function saveCatalogPageContent(content: CatalogPageContentData) {
+  return db
+    .prepare(
+      `INSERT INTO site_content (key, value_json, updated_at)
+       VALUES (@key, @value_json, datetime('now'))
+       ON CONFLICT(key) DO UPDATE SET
+         value_json = excluded.value_json,
+         updated_at = datetime('now')`,
+    )
+    .run({
+      key: CATALOG_PAGE_CONTENT_KEY,
+      value_json: JSON.stringify(content),
+    });
+}
+
+export function getFAQContent(): FAQContentData {
+  const row = db
+    .prepare(`SELECT value_json FROM site_content WHERE key = ?`)
+    .get(FAQ_CONTENT_KEY) as { value_json?: string } | undefined;
+
+  if (!row?.value_json) {
+    return resolveFAQContent(null);
+  }
+
+  try {
+    return resolveFAQContent(JSON.parse(row.value_json));
+  } catch {
+    return resolveFAQContent(null);
+  }
+}
+
+export function saveFAQContent(content: FAQContentData) {
+  return db
+    .prepare(
+      `INSERT INTO site_content (key, value_json, updated_at)
+       VALUES (@key, @value_json, datetime('now'))
+       ON CONFLICT(key) DO UPDATE SET
+         value_json = excluded.value_json,
+         updated_at = datetime('now')`,
+    )
+    .run({
+      key: FAQ_CONTENT_KEY,
+      value_json: JSON.stringify(content),
+    });
+}
+
+export function getPaymentDeliveryContent(): PaymentDeliveryContentData {
+  const row = db
+    .prepare(`SELECT value_json FROM site_content WHERE key = ?`)
+    .get(PAYMENT_DELIVERY_CONTENT_KEY) as { value_json?: string } | undefined;
+
+  if (!row?.value_json) {
+    return resolvePaymentDeliveryContent(null);
+  }
+
+  try {
+    return resolvePaymentDeliveryContent(JSON.parse(row.value_json));
+  } catch {
+    return resolvePaymentDeliveryContent(null);
+  }
+}
+
+export function savePaymentDeliveryContent(
+  content: PaymentDeliveryContentData,
+) {
+  return db
+    .prepare(
+      `INSERT INTO site_content (key, value_json, updated_at)
+       VALUES (@key, @value_json, datetime('now'))
+       ON CONFLICT(key) DO UPDATE SET
+         value_json = excluded.value_json,
+         updated_at = datetime('now')`,
+    )
+    .run({
+      key: PAYMENT_DELIVERY_CONTENT_KEY,
+      value_json: JSON.stringify(content),
+    });
 }
 
 export default db;

@@ -4,6 +4,10 @@ import { useState, useRef, useEffect } from "react";
 import { useParams, notFound } from "next/navigation";
 import { motion } from "framer-motion";
 import { type Artwork } from "@/data/artworks";
+import {
+  catalogPageContent as defaultCatalogPageContent,
+  type CatalogPageContentData,
+} from "@/data/catalog-page-content";
 import { DSContainer } from "@/components/ui/design-system";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -18,6 +22,7 @@ import { ProductFramingService } from "@/components/features/catalog/product/Pro
 import { ProductCTAs } from "@/components/features/catalog/product/ProductCTAs";
 import { InteriorViewModal } from "@/components/modals/InteriorViewModal";
 import { ShareSection } from "@/components/features/art-insights/ShareSection";
+import { isCatalogPageContent } from "@/lib/catalog-page-content";
 
 export default function ProductContent() {
   const params = useParams();
@@ -26,6 +31,8 @@ export default function ProductContent() {
   const imgRef = useRef<HTMLImageElement>(null);
   const { registerTarget } = usePageTransition();
   const [artwork, setArtwork] = useState<Artwork | null>(null);
+  const [catalogPageContent, setCatalogPageContent] =
+    useState<CatalogPageContentData>(defaultCatalogPageContent);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [isInteriorModalOpen, setIsInteriorModalOpen] = useState(false);
@@ -40,30 +47,41 @@ export default function ProductContent() {
 
   useEffect(() => {
     let mounted = true;
-
-    fetch(`/api/catalog/${id}`, { cache: "no-store" })
-      .then(async (res) => {
+    Promise.allSettled([
+      fetch(`/api/catalog/${id}`, { cache: "no-store" }).then(async (res) => {
         if (!res.ok) throw new Error("Failed to load item");
         return res.json();
-      })
-      .then((data) => {
+      }),
+      fetch("/api/catalog-content", { cache: "no-store" }).then((res) =>
+        res.json(),
+      ),
+    ])
+      .then(([itemResult, contentResult]) => {
         if (!mounted) return;
-        const item = data.item as Artwork | undefined;
-        if (!item || item.category !== categoryId) {
+
+        if (itemResult.status === "fulfilled") {
+          const item = itemResult.value.item as Artwork | undefined;
+          if (!item || item.category !== categoryId) {
+            setLoadError(true);
+            setArtwork(null);
+          } else {
+            setSelectedSize(item.options?.sizes?.[0] || "50*70");
+            setSelectedFinish(item.options?.finishes?.[0] || "Дуб");
+            setSelectedFabric(item.options?.fabrics?.[0] || "Ткань 1");
+            setLoadError(false);
+            setArtwork(item);
+          }
+        } else {
           setLoadError(true);
           setArtwork(null);
-          return;
         }
-        setSelectedSize(item.options?.sizes?.[0] || "50*70");
-        setSelectedFinish(item.options?.finishes?.[0] || "Дуб");
-        setSelectedFabric(item.options?.fabrics?.[0] || "Ткань 1");
-        setLoadError(false);
-        setArtwork(item);
-      })
-      .catch(() => {
-        if (!mounted) return;
-        setLoadError(true);
-        setArtwork(null);
+
+        if (contentResult.status === "fulfilled") {
+          const data = contentResult.value;
+          if (isCatalogPageContent(data?.item)) {
+            setCatalogPageContent(data.item);
+          }
+        }
       })
       .finally(() => {
         if (!mounted) return;
@@ -96,7 +114,7 @@ export default function ProductContent() {
                   size={14}
                   className="group-hover:-translate-x-1 transition-transform"
                 />
-                Вернуться в каталог
+                {catalogPageContent.productPage.backButtonLabel}
               </Link>
               <p className="text-sm text-muted-foreground">
                 Загрузка товара...
@@ -129,14 +147,14 @@ export default function ProductContent() {
               size={14}
               className="group-hover:-translate-x-1 transition-transform"
             />
-            Вернуться в каталог
+            {catalogPageContent.productPage.backButtonLabel}
           </Link>
 
           <div className="flex flex-col lg:flex-row gap-12 items-stretch lg:min-h-[calc(100vh-160px)]">
             <ProductVisuals
               ref={imgRef}
               artwork={artwork}
-              onOpenInterior={() => setIsInteriorModalOpen(true)}
+              productPageContent={catalogPageContent.productPage}
             />
 
             <motion.div

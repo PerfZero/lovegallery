@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import ProductContent from "./ProductContent";
-import { categoryThemes } from "@/data/artworks";
+import { catalogPageContent } from "@/data/catalog-page-content";
 import { ensureCatalogSeeded } from "@/lib/catalog-seed";
 import { getCatalogItemBySlug } from "@/lib/db";
 import { buildPageMetadata } from "@/lib/seo";
@@ -15,7 +15,9 @@ export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
   const { category, id } = await params;
-  const categoryTheme = categoryThemes[category as keyof typeof categoryThemes];
+  const categoryTheme = catalogPageContent.categoryPages.find(
+    (item) => item.id === category,
+  );
 
   ensureCatalogSeeded();
   const item = getCatalogItemBySlug(id);
@@ -39,9 +41,9 @@ export async function generateMetadata({
 
   const baseDescription = descriptionParts.join(" ");
   const fallbackDescription =
-    categoryTheme?.subtitle ||
+    categoryTheme?.headline ||
     "Товар из каталога галереи Любовь с подробными характеристиками.";
-  const seoTitle = `${item.title} — ${categoryTheme?.title || "товар для интерьера"}: цена, фото и характеристики`;
+  const seoTitle = `${item.title} — ${categoryTheme?.navTitle || "товар для интерьера"}: цена, фото и характеристики`;
 
   return buildPageMetadata({
     title: seoTitle,
@@ -53,7 +55,7 @@ export async function generateMetadata({
     keywords: [
       "каталог",
       "товар",
-      categoryTheme?.title || category,
+      categoryTheme?.navTitle || category,
       item.title,
     ],
   });

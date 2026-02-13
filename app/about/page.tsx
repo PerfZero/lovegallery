@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
@@ -16,15 +16,36 @@ import {
   DSDecorativeAsterisk,
 } from "@/components/ui/design-system";
 import { Reveal } from "@/components/ui/reveal";
-import { aboutContent } from "@/data/about-content";
+import { aboutContent, type AboutContent } from "@/data/about-content";
+import { isAboutContent } from "@/lib/about-content";
 import { Z_INDEX } from "@/lib/constants";
 
 export default function AboutPage() {
-  const { hero, categories, alphabet, outro } = aboutContent;
   const [videoModal, setVideoModal] = useState<{
     isOpen: boolean;
     src: string | null;
   }>({ isOpen: false, src: null });
+  const [content, setContent] = useState<AboutContent>(aboutContent);
+  const { hero, categories, alphabet, outro } = content;
+
+  useEffect(() => {
+    let mounted = true;
+    fetch("/api/about", { cache: "no-store" })
+      .then((res) => res.json())
+      .then((data) => {
+        if (!mounted) return;
+        const incoming = data?.item;
+        if (!isAboutContent(incoming)) return;
+        setContent(incoming);
+      })
+      .catch(() => {
+        // keep static fallback content
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-background text-foreground selection:bg-accent selection:text-white overflow-auto">
@@ -64,34 +85,69 @@ export default function AboutPage() {
                   delay={index * 100}
                   className="bg-background group relative overflow-hidden aspect-[3/4]"
                 >
-                  <Image
-                    src={cat.image}
-                    alt={cat.title}
-                    fill
-                    className="object-cover transition-transform duration-[2.5s] group-hover:scale-110 grayscale-[0.5] group-hover:grayscale-0 opacity-90 group-hover:opacity-100"
-                  />
-                  <div className="absolute inset-0 bg-black/25 group-hover:bg-black/10 transition-colors duration-700" />
+                  {cat.href ? (
+                    <Link href={cat.href} className="block h-full">
+                      <Image
+                        src={cat.image}
+                        alt={cat.title}
+                        fill
+                        className="object-cover transition-transform duration-[2.5s] group-hover:scale-110 grayscale-[0.5] group-hover:grayscale-0 opacity-90 group-hover:opacity-100"
+                      />
+                      <div className="absolute inset-0 bg-black/25 group-hover:bg-black/10 transition-colors duration-700" />
 
-                  {/* Bottom Gradient for better text contrast */}
-                  <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/40 to-transparent opacity-100 transition-opacity duration-700" />
+                      {/* Bottom Gradient for better text contrast */}
+                      <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/40 to-transparent opacity-100 transition-opacity duration-700" />
 
-                  <div className="absolute inset-0 p-8 flex flex-col justify-end translate-y-8 group-hover:translate-y-0 transition-transform duration-700">
-                    <div className="space-y-4">
-                      <h4 className="text-white font-display italic text-2xl md:text-3xl drop-shadow-md">
-                        {cat.title}
-                      </h4>
-                      <p className="text-white/80 font-body text-[10px] md:text-[11px] leading-relaxed max-w-[80%] opacity-0 group-hover:opacity-100 transition-opacity duration-700 delay-100 italic">
-                        — {cat.description}
-                      </p>
-                    </div>
-                  </div>
+                      <div className="absolute inset-0 p-8 flex flex-col justify-end translate-y-8 group-hover:translate-y-0 transition-transform duration-700">
+                        <div className="space-y-4">
+                          <h4 className="text-white font-display italic text-2xl md:text-3xl drop-shadow-md">
+                            {cat.title}
+                          </h4>
+                          <p className="text-white/80 font-body text-[10px] md:text-[11px] leading-relaxed max-w-[80%] opacity-0 group-hover:opacity-100 transition-opacity duration-700 delay-100 italic">
+                            — {cat.description}
+                          </p>
+                        </div>
+                      </div>
 
-                  {/* Numbering UI */}
-                  <div className="absolute top-8 right-8 overflow-hidden">
-                    <span className="text-white/30 font-display italic text-4xl block translate-y-full group-hover:translate-y-0 transition-transform duration-700">
-                      0{index + 1}
-                    </span>
-                  </div>
+                      {/* Numbering UI */}
+                      <div className="absolute top-8 right-8 overflow-hidden">
+                        <span className="text-white/30 font-display italic text-4xl block translate-y-full group-hover:translate-y-0 transition-transform duration-700">
+                          0{index + 1}
+                        </span>
+                      </div>
+                    </Link>
+                  ) : (
+                    <>
+                      <Image
+                        src={cat.image}
+                        alt={cat.title}
+                        fill
+                        className="object-cover transition-transform duration-[2.5s] group-hover:scale-110 grayscale-[0.5] group-hover:grayscale-0 opacity-90 group-hover:opacity-100"
+                      />
+                      <div className="absolute inset-0 bg-black/25 group-hover:bg-black/10 transition-colors duration-700" />
+
+                      {/* Bottom Gradient for better text contrast */}
+                      <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/40 to-transparent opacity-100 transition-opacity duration-700" />
+
+                      <div className="absolute inset-0 p-8 flex flex-col justify-end translate-y-8 group-hover:translate-y-0 transition-transform duration-700">
+                        <div className="space-y-4">
+                          <h4 className="text-white font-display italic text-2xl md:text-3xl drop-shadow-md">
+                            {cat.title}
+                          </h4>
+                          <p className="text-white/80 font-body text-[10px] md:text-[11px] leading-relaxed max-w-[80%] opacity-0 group-hover:opacity-100 transition-opacity duration-700 delay-100 italic">
+                            — {cat.description}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Numbering UI */}
+                      <div className="absolute top-8 right-8 overflow-hidden">
+                        <span className="text-white/30 font-display italic text-4xl block translate-y-full group-hover:translate-y-0 transition-transform duration-700">
+                          0{index + 1}
+                        </span>
+                      </div>
+                    </>
+                  )}
                 </Reveal>
               ))}
             </div>
@@ -101,6 +157,9 @@ export default function AboutPage() {
         {/* 3. ALPHABET NARRATIVE: Multi-layered Experience */}
         {alphabet.map((item, index) => {
           const isEven = index % 2 === 0;
+          const hasCaptionLink = Boolean(
+            item.captionLinkLabel && item.captionLinkHref,
+          );
           return (
             <DSSection key={item.letter} className="mb-32 md:mb-64">
               <DSContainer>
@@ -169,36 +228,21 @@ export default function AboutPage() {
                       className="md:absolute md:-bottom-[158px] md:-right-12 bg-white/80 backdrop-blur-md p-6 md:p-10 shadow-2xl border border-black/5 max-w-[280px] w-full md:w-auto z-20 transition-all duration-700 hover:bg-white/90 mt-4 md:mt-0"
                     >
                       <div className="relative">
-                        {item.letter !== "А" && item.letter !== "Б" && (
-                          <DSLabel className="mb-3 text-accent transition-colors">
-                            Принцип {item.letter}
-                          </DSLabel>
-                        )}
+                        <DSLabel className="mb-3 text-accent transition-colors">
+                          Принцип {item.letter}
+                        </DSLabel>
                         <p className="font-display italic text-lg md:text-xl leading-snug text-foreground/80">
-                          {item.letter === "А" ? (
+                          {item.caption || "Эстетика и совершенство в деталях"}
+                          {hasCaptionLink && (
                             <>
-                              На видео представлены панно САНГИТА и ковер ШИНАМ
-                              из нашей коллекции{" "}
+                              {" "}
                               <Link
-                                href="/catalog/collections"
+                                href={item.captionLinkHref!}
                                 className="text-accent underline decoration-accent/30 hover:decoration-accent transition-all"
                               >
-                                ШАНТАРАМ
+                                {item.captionLinkLabel}
                               </Link>
                             </>
-                          ) : item.letter === "Б" ? (
-                            <>
-                              На видео представлены панно UNIvers и ковер Уно из
-                              нашей коллекции{" "}
-                              <Link
-                                href="/catalog/collections/coll-nachalo/"
-                                className="text-accent underline decoration-accent/30 hover:decoration-accent transition-all"
-                              >
-                                НАЧАЛО
-                              </Link>
-                            </>
-                          ) : (
-                            item.caption || "Эстетика и совершенство в деталях"
                           )}
                         </p>
                         <div className="absolute -top-2 -left-2 w-4 h-4 border-t border-l border-accent/20" />
@@ -267,13 +311,13 @@ export default function AboutPage() {
                   level="h2"
                   className="text-3xl md:text-5xl lg:text-6xl text-white font-medium leading-snug drop-shadow-2xl mb-6 tracking-wide"
                 >
-                  Искусство требует.
+                  {outro.headlinePrimary || "Искусство требует."}
                 </DSHeading>
                 <DSHeading
                   level="h2"
                   className="text-2xl md:text-4xl lg:text-5xl text-accent font-medium leading-snug tracking-wide"
                 >
-                  Заботу мы берём на себя.
+                  {outro.headlineSecondary || "Заботу мы берём на себя."}
                 </DSHeading>
               </div>
 

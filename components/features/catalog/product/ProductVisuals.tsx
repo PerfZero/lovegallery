@@ -4,17 +4,18 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Maximize2, ChevronLeft, ChevronRight, X } from "lucide-react";
 import Image from "next/image";
 import { type Artwork } from "@/data/artworks";
+import { type CatalogProductPageContent } from "@/data/catalog-page-content";
 import { DSLabel, DSText } from "@/components/ui/design-system";
 import { ForwardedRef, forwardRef, useState } from "react";
 
 interface ProductVisualsProps {
   artwork: Artwork;
-  onOpenInterior: () => void;
+  productPageContent: CatalogProductPageContent;
 }
 
 export const ProductVisuals = forwardRef(
   (
-    { artwork, onOpenInterior }: ProductVisualsProps,
+    { artwork, productPageContent }: ProductVisualsProps,
     ref: ForwardedRef<HTMLImageElement>,
   ) => {
     const images = artwork.images || [artwork.image];
@@ -145,23 +146,25 @@ export const ProductVisuals = forwardRef(
             className="grid grid-cols-2 gap-8 py-8"
           >
             <div className="space-y-4">
-              <DSLabel className="text-accent">Материалы</DSLabel>
+              <DSLabel className="text-accent">
+                {productPageContent.materialsTitle}
+              </DSLabel>
               <DSText
                 size="sm"
                 className="text-muted-foreground leading-relaxed"
               >
-                Натуральный массив дерева, экологичный шпон, водоотталкивающая
-                ткань. Премиальная отделка лаком.
+                {productPageContent.materialsDescription}
               </DSText>
             </div>
             <div className="space-y-4">
-              <DSLabel className="text-accent">Доставка</DSLabel>
+              <DSLabel className="text-accent">
+                {productPageContent.deliveryTitle}
+              </DSLabel>
               <DSText
                 size="sm"
                 className="text-muted-foreground leading-relaxed"
               >
-                Бережная упаковка. Доставка по всей России через СДЭК или
-                курьером.
+                {productPageContent.deliveryDescription}
               </DSText>
             </div>
           </motion.div>

@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
-import { categoryThemes } from "@/data/artworks";
+import {
+  CATALOG_CATEGORY_IDS,
+  catalogPageContent,
+} from "@/data/catalog-page-content";
 import CategoryContent from "./CategoryContent";
 import { buildPageMetadata } from "@/lib/seo";
 
@@ -11,9 +14,14 @@ export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
   const { category } = await params;
-  const theme = categoryThemes[category as keyof typeof categoryThemes];
+  const pageTheme = catalogPageContent.categoryPages.find(
+    (item) => item.id === category,
+  );
+  const listTheme = catalogPageContent.categories.find(
+    (item) => item.id === category,
+  );
 
-  if (!theme) {
+  if (!pageTheme || !listTheme) {
     return buildPageMetadata({
       title: "Категория не найдена",
       description:
@@ -25,17 +33,21 @@ export async function generateMetadata({
   }
 
   return buildPageMetadata({
-    title: theme.title,
-    description: `${theme.subtitle} В разделе вы найдете актуальные товары с детальными фото, описаниями, параметрами и возможностью получить консультацию по подбору под ваш интерьер.`,
+    title: pageTheme.navTitle,
+    description: `${pageTheme.headline} В разделе вы найдете актуальные товары с детальными фото, описаниями, параметрами и возможностью получить консультацию по подбору под ваш интерьер.`,
     path: `/catalog/${category}`,
     image: "/images/interior_catalog_aesthetic.webp",
-    keywords: ["каталог", "интерьерное искусство", theme.title.toLowerCase()],
+    keywords: [
+      "каталог",
+      "интерьерное искусство",
+      listTheme.title.toLowerCase(),
+    ],
   });
 }
 
 export async function generateStaticParams() {
-  return Object.keys(categoryThemes).map((category) => ({
-    category: category,
+  return CATALOG_CATEGORY_IDS.map((category) => ({
+    category,
   }));
 }
 
