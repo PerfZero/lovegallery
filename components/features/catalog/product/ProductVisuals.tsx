@@ -131,7 +131,7 @@ export const ProductVisuals = forwardRef(
           >
             {artwork.description && (
               <div className="pb-8 border-b border-border/10">
-                <DSText className="text-l text-foreground/90 leading-relaxed font-light italic whitespace-pre-line md:text-xl">
+                <DSText className="text-l text-foreground/90 leading-relaxed font-light  whitespace-pre-line md:text-xl">
                   {artwork.description}
                 </DSText>
               </div>
