@@ -14,19 +14,19 @@ const interiorImages = [
   {
     src: "/images/interiors/interior_1.png",
     title: "Современная гостиная",
-    artworkScale: "w-[22%] md:w-[18%]",
+    artworkScale: "w-[22%] md:w-[12%]",
     artworkPosition: "pb-[10%]",
   },
   {
     src: "/images/interiors/interior_2.png",
     title: "Элегантная спальня",
-    artworkScale: "w-[18%] md:w-[15%]",
+    artworkScale: "w-[18%] md:w-[10%]",
     artworkPosition: "pb-[18%]",
   },
   {
     src: "/images/interiors/interior_3.png",
     title: "Лаунж-зона",
-    artworkScale: "w-[20%] md:w-[16%]",
+    artworkScale: "w-[20%] md:w-[13%]",
     artworkPosition: "pb-[12%]",
   },
 ];
@@ -98,10 +98,10 @@ export const InteriorViewModal = ({
         {/* Header Overlay */}
         <div className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between p-6 md:p-8 bg-gradient-to-b from-background/90 via-background/60 to-transparent pointer-events-auto">
           <div className="space-y-1">
-            <p className="text-[10px] text-accent font-bold uppercase tracking-[0.3em] opacity-80">
+            <p className="text-[10px] text-foreground/75 font-bold uppercase tracking-[0.3em]">
               Примерка: {productTitle || "Арт-объект"}
             </p>
-            <h3 className="text-foreground font-display text-xl md:text-2xl italic drop-shadow-lg">
+            <h3 className="text-foreground/95 font-display text-xl md:text-2xl italic drop-shadow-lg">
               {currentInterior.title}
             </h3>
           </div>
@@ -133,17 +133,25 @@ export const InteriorViewModal = ({
               variant="ghost"
               size="icon"
               onClick={prevInterior}
-              className="pointer-events-auto text-foreground/60 hover:text-foreground hover:bg-foreground/10 bg-foreground/5 backdrop-blur-md rounded-full w-12 h-12 md:w-16 md:h-16 transition-all border border-foreground/10"
+              className="pointer-events-auto text-white/95 hover:text-white hover:bg-black/25 bg-black/15 backdrop-blur-md rounded-full w-12 h-12 md:w-16 md:h-16 transition-all border border-white/20 shadow-[0_8px_24px_rgba(0,0,0,0.35)]"
             >
-              <ChevronLeft size={32} strokeWidth={1} />
+              <ChevronLeft
+                size={32}
+                strokeWidth={1.5}
+                className="mix-blend-difference"
+              />
             </Button>
             <Button
               variant="ghost"
               size="icon"
               onClick={nextInterior}
-              className="pointer-events-auto text-foreground/60 hover:text-foreground hover:bg-foreground/10 bg-foreground/5 backdrop-blur-md rounded-full w-12 h-12 md:w-16 md:h-16 transition-all border border-foreground/10"
+              className="pointer-events-auto text-white/95 hover:text-white hover:bg-black/25 bg-black/15 backdrop-blur-md rounded-full w-12 h-12 md:w-16 md:h-16 transition-all border border-white/20 shadow-[0_8px_24px_rgba(0,0,0,0.35)]"
             >
-              <ChevronRight size={32} strokeWidth={1} />
+              <ChevronRight
+                size={32}
+                strokeWidth={1.5}
+                className="mix-blend-difference"
+              />
             </Button>
           </div>
 
@@ -158,7 +166,7 @@ export const InteriorViewModal = ({
                 <img
                   src={productImage}
                   alt={productTitle || "Произведение"}
-                  className="w-full h-full object-contain drop-shadow-[0_12px_18px_rgba(0,0,0,0.25)] brightness-[0.96] contrast-[0.98] saturate-[0.92]"
+                  className="w-full h-full object-cover drop-shadow-[0_12px_18px_rgba(0,0,0,0.25)] brightness-[0.96] contrast-[0.98] saturate-[0.92]"
                 />
                 <div className="absolute inset-0 bg-foreground/10 mix-blend-multiply pointer-events-none" />
               </div>
@@ -169,15 +177,15 @@ export const InteriorViewModal = ({
         {/* UI Overlay Blocks */}
         {!isFullscreen && (
           <div className="absolute bottom-4 md:bottom-10 left-4 md:left-10 right-4 md:right-10 flex flex-col md:flex-row items-stretch md:items-end justify-between gap-3 md:gap-8 z-30 pointer-events-none">
-            <div className="p-4 md:p-8 bg-white/10 backdrop-blur-xl border border-white/10 rounded-2xl pointer-events-auto w-full md:max-w-md">
+            <div className="p-4 md:p-8 bg-foreground/55 backdrop-blur-xl border border-foreground/30 rounded-2xl pointer-events-auto w-full md:max-w-md">
               <div className="space-y-2 md:space-y-3">
                 <div className="flex items-center gap-2">
-                  <span className="w-8 h-px bg-accent/60" />
-                  <p className="text-[10px] text-accent uppercase tracking-[0.3em] font-bold">
+                  <span className="w-8 h-px bg-background/60" />
+                  <p className="text-[10px] text-background/90 uppercase tracking-[0.3em] font-bold">
                     Интерьер {currentIndex + 1} из {interiorImages.length}
                   </p>
                 </div>
-                <p className="text-[11px] md:text-sm font-body italic text-foreground/70 leading-relaxed">
+                <p className="text-[11px] md:text-sm font-body italic text-background/85 leading-relaxed">
                   Переключайте интерьеры, чтобы подобрать идеальное место для
                   вашей работы.
                 </p>
@@ -191,7 +199,7 @@ export const InteriorViewModal = ({
                   e.stopPropagation();
                   toggleFullscreen();
                 }}
-                className="w-full md:w-auto justify-center gap-3 text-[10px] text-white uppercase tracking-[0.2em] font-bold py-4 md:py-7 px-6 md:px-10 bg-white/5 backdrop-blur-xl border-white/20 hover:bg-accent hover:border-accent hover:text-white transition-all duration-500 rounded-full shadow-xl"
+                className="w-full md:w-auto justify-center gap-3 text-[10px] text-foreground uppercase tracking-[0.2em] font-bold py-4 md:py-7 px-6 md:px-10 bg-background/80 backdrop-blur-xl border-foreground/30 hover:bg-foreground hover:border-foreground hover:text-background transition-all duration-500 rounded-full shadow-xl"
               >
                 <Maximize2 size={16} />
                 На весь экран
