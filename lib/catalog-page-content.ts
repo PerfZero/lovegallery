@@ -23,7 +23,9 @@ function isCatalogCategoryId(value: unknown): value is CatalogCategoryId {
   );
 }
 
-function isCategorySubnavItem(value: unknown): value is CatalogCategorySubnavItem {
+function isCategorySubnavItem(
+  value: unknown,
+): value is CatalogCategorySubnavItem {
   if (!isObject(value)) return false;
   if (!isString(value.label)) return false;
   if (typeof value.href !== "undefined" && !isString(value.href)) return false;
@@ -57,12 +59,6 @@ function isCategoryPageItem(value: unknown): value is CatalogCategoryPageItem {
   ) {
     return false;
   }
-  if (
-    typeof value.backgroundVideoSrc !== "undefined" &&
-    !isString(value.backgroundVideoSrc)
-  ) {
-    return false;
-  }
   if (!value.subnav.every(isCategorySubnavItem)) return false;
   return true;
 }
@@ -72,7 +68,9 @@ function hasAllCategoryIds(items: { id: CatalogCategoryId }[]): boolean {
   return CATALOG_CATEGORY_IDS.every((id) => ids.includes(id));
 }
 
-export function isCatalogPageContent(value: unknown): value is CatalogPageContentData {
+export function isCatalogPageContent(
+  value: unknown,
+): value is CatalogPageContentData {
   if (!isObject(value)) return false;
   if (!isObject(value.hero)) return false;
   if (!isObject(value.productPage)) return false;
@@ -103,9 +101,53 @@ export function cloneCatalogPageContent(
   return JSON.parse(JSON.stringify(content)) as CatalogPageContentData;
 }
 
-export function resolveCatalogPageContent(value: unknown): CatalogPageContentData {
-  if (isCatalogPageContent(value)) {
-    return cloneCatalogPageContent(value);
+function withLegacyCategoryVideos(value: unknown): unknown {
+  if (!isObject(value)) return value;
+  if (!Array.isArray(value.categories) || !Array.isArray(value.categoryPages)) {
+    return value;
+  }
+
+  let cloned: Record<string, unknown>;
+  try {
+    cloned = JSON.parse(JSON.stringify(value)) as Record<string, unknown>;
+  } catch {
+    return value;
+  }
+
+  const categories = Array.isArray(cloned.categories) ? cloned.categories : [];
+  const categoryPages = Array.isArray(cloned.categoryPages)
+    ? cloned.categoryPages
+    : [];
+  const legacyVideoMap = new Map<CatalogCategoryId, string>();
+
+  categoryPages.forEach((item) => {
+    if (!isObject(item) || !isCatalogCategoryId(item.id)) return;
+    const legacyVideo = item.backgroundVideoSrc;
+    if (typeof legacyVideo !== "string") return;
+    const trimmed = legacyVideo.trim();
+    if (!trimmed) return;
+    legacyVideoMap.set(item.id, trimmed);
+  });
+
+  categories.forEach((item) => {
+    if (!isObject(item) || !isCatalogCategoryId(item.id)) return;
+    const currentVideo = item.videoSrc;
+    if (typeof currentVideo === "string" && currentVideo.trim()) return;
+    const legacyVideo = legacyVideoMap.get(item.id);
+    if (legacyVideo) {
+      item.videoSrc = legacyVideo;
+    }
+  });
+
+  return cloned;
+}
+
+export function resolveCatalogPageContent(
+  value: unknown,
+): CatalogPageContentData {
+  const migrated = withLegacyCategoryVideos(value);
+  if (isCatalogPageContent(migrated)) {
+    return cloneCatalogPageContent(migrated);
   }
   return cloneCatalogPageContent(defaultCatalogPageContent);
 }

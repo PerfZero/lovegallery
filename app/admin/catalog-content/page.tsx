@@ -205,7 +205,7 @@ export default function AdminCatalogContentPage() {
 
   const updateCategoryPage = (
     id: (typeof CATALOG_CATEGORY_IDS)[number],
-    key: "navTitle" | "headline" | "accentColor" | "backgroundVideoSrc",
+    key: "navTitle" | "headline" | "accentColor",
     value: string,
   ) => {
     setForm((prev) => ({
@@ -293,7 +293,6 @@ export default function AdminCatalogContentPage() {
           navTitle: item.navTitle.trim(),
           headline: item.headline.trim(),
           accentColor: item.accentColor.trim(),
-          backgroundVideoSrc: item.backgroundVideoSrc?.trim() || undefined,
           subnav: item.subnav
             .map((entry) => ({
               label: entry.label.trim(),
@@ -400,7 +399,8 @@ export default function AdminCatalogContentPage() {
           <div>
             <CardTitle>Категории на странице /catalog</CardTitle>
             <CardDescription>
-              Тексты и hover-видео списка категорий.
+              Тексты и видео категории. Это же видео используется и на
+              /catalog/[category].
             </CardDescription>
           </div>
           <Button
@@ -485,7 +485,7 @@ export default function AdminCatalogContentPage() {
                           />
                         </div>
                         <div className="grid gap-2">
-                          <Label>Hover видео (необязательно)</Label>
+                          <Label>Видео категории (одно поле)</Label>
                           <Input
                             value={item.videoSrc || ""}
                             onChange={(e) =>
@@ -557,7 +557,7 @@ export default function AdminCatalogContentPage() {
           <div>
             <CardTitle>Страницы категорий /catalog/[category]</CardTitle>
             <CardDescription>
-              Заголовки, subnav и фоновое видео каждой категории.
+              Заголовки и subnav каждой категории.
             </CardDescription>
           </div>
           <Button
@@ -579,7 +579,6 @@ export default function AdminCatalogContentPage() {
             <CardContent className="space-y-4">
               {categoryPagesOrder.map((item, index) => {
                 const isOpen = openCategoryPages.includes(index);
-                const uploadId = `catalog-category-page-video-${item.id}`;
                 return (
                   <Collapsible
                     key={`catalog-category-page-${item.id}`}
@@ -644,72 +643,6 @@ export default function AdminCatalogContentPage() {
                             }
                             className="bg-white/50 min-h-[90px]"
                           />
-                        </div>
-                        <div className="grid gap-2">
-                          <Label>Фоновое видео страницы</Label>
-                          <Input
-                            value={item.backgroundVideoSrc || ""}
-                            onChange={(e) =>
-                              updateCategoryPage(
-                                item.id,
-                                "backgroundVideoSrc",
-                                e.target.value,
-                              )
-                            }
-                            className="bg-white/50"
-                            placeholder="/videos/category-background.mp4"
-                          />
-                          <div className="flex flex-wrap gap-2">
-                            <input
-                              id={uploadId}
-                              type="file"
-                              accept="video/*"
-                              className="hidden"
-                              onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                void handleUpload(
-                                  `upload-${uploadId}`,
-                                  (url) =>
-                                    updateCategoryPage(
-                                      item.id,
-                                      "backgroundVideoSrc",
-                                      url,
-                                    ),
-                                  file,
-                                );
-                                e.currentTarget.value = "";
-                              }}
-                            />
-                            <Button
-                              type="button"
-                              variant="outline"
-                              disabled={uploadingField === `upload-${uploadId}`}
-                              onClick={() => triggerFileInput(uploadId)}
-                            >
-                              <UploadCloud className="mr-2 h-4 w-4" />
-                              {uploadingField === `upload-${uploadId}`
-                                ? "Загрузка..."
-                                : item.backgroundVideoSrc
-                                  ? "Заменить видео"
-                                  : "Загрузить видео"}
-                            </Button>
-                            {item.backgroundVideoSrc && (
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                onClick={() =>
-                                  updateCategoryPage(
-                                    item.id,
-                                    "backgroundVideoSrc",
-                                    "",
-                                  )
-                                }
-                              >
-                                Удалить видео
-                              </Button>
-                            )}
-                          </div>
                         </div>
 
                         <div className="space-y-3">

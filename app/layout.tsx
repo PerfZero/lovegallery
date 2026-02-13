@@ -62,6 +62,10 @@ export const metadata: Metadata = {
   icons: {
     icon: "/favicon.ico",
   },
+
+  verification: {
+    yandex: "747b43b80ba8a92e",
+  },
 };
 
 export const viewport: Viewport = {

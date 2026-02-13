@@ -25,10 +25,7 @@ export const CategoryHeader = ({
   categoryPage,
   catalogCategory,
 }: CategoryHeaderProps) => {
-  const backgroundVideo =
-    categoryPage.backgroundVideoSrc ||
-    catalogCategory?.videoSrc ||
-    (categoryId === "collections" ? "/videos/colection.mp4" : undefined);
+  const backgroundVideo = catalogCategory?.videoSrc;
 
   return (
     <section className="pt-40 pb-20 relative">
@@ -124,7 +121,11 @@ export const CategoryHeader = ({
 
               if (href) {
                 return (
-                  <Link key={`${item.label}-${index}`} href={href} className={className}>
+                  <Link
+                    key={`${item.label}-${index}`}
+                    href={href}
+                    className={className}
+                  >
                     {content}
                   </Link>
                 );

@@ -31,7 +31,6 @@ export interface CatalogCategoryPageItem {
   navTitle: string;
   headline: string;
   accentColor: string;
-  backgroundVideoSrc?: string;
   subnav: CatalogCategorySubnavItem[];
 }
 
@@ -98,7 +97,6 @@ export const catalogPageContent: CatalogPageContentData = {
       headline:
         "Наши арты - это не просто картины, а объект, созданный для вашего вдохновения.",
       accentColor: "from-orange-950/20 to-transparent",
-      backgroundVideoSrc: "/videos/painting-hover.mp4",
       subnav: [
         {
           label: "Как выбрать цвет",
@@ -119,7 +117,6 @@ export const catalogPageContent: CatalogPageContentData = {
       navTitle: "Фото",
       headline: "Искусство момента, запечатленное сквозь призму вечности.",
       accentColor: "from-slate-900/20 to-transparent",
-      backgroundVideoSrc: "/videos/photo-hover.mp4",
       subnav: [
         {
           label: "Форматы печати",
@@ -136,7 +133,6 @@ export const catalogPageContent: CatalogPageContentData = {
       navTitle: "Текстиль",
       headline: "Тепло и тактильная эстетика вашего дома.",
       accentColor: "from-amber-900/20 to-transparent",
-      backgroundVideoSrc: "/videos/textile-hover.mp4",
       subnav: [
         {
           label: "Материалы",
@@ -153,7 +149,6 @@ export const catalogPageContent: CatalogPageContentData = {
       navTitle: "Мебель для животных",
       headline: "Коллекция ТЕССЕРА. Премиальная мебель для любимых питомцев",
       accentColor: "from-emerald-900/20 to-transparent",
-      backgroundVideoSrc: "/videos/pet-furniture-hover-revised.mp4",
       subnav: [
         {
           label: "Размерная сетка",
@@ -170,7 +165,6 @@ export const catalogPageContent: CatalogPageContentData = {
       navTitle: "КОЛЛЕКЦИИ",
       headline: "Идеальная синергия наших изделий в каждой капсуле.",
       accentColor: "from-zinc-900/20 to-transparent",
-      backgroundVideoSrc: "/videos/colection.mp4",
       subnav: [
         {
           label: "Шантарам",
