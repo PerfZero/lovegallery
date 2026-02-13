@@ -62,6 +62,7 @@ function parsePatchPayload(body: unknown) {
     price?: string;
     image?: string;
     videoSrc?: string | null;
+    model3dSrc?: string | null;
     imagesJson?: string | null;
     aspectRatio?: string;
     tagsJson?: string | null;
@@ -110,6 +111,10 @@ function parsePatchPayload(body: unknown) {
 
   if (typeof input.videoSrc !== "undefined") {
     out.videoSrc = str(input.videoSrc) || null;
+  }
+
+  if (typeof input.model3dSrc !== "undefined") {
+    out.model3dSrc = str(input.model3dSrc) || null;
   }
 
   if (typeof input.images !== "undefined") {

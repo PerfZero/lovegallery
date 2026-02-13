@@ -6,6 +6,7 @@ export interface Artwork {
     price: string;
     image: string;
     videoSrc?: string;
+    model3dSrc?: string;
     images?: string[];
     aspectRatio: 'portrait' | 'square' | 'landscape';
     tags: string[];

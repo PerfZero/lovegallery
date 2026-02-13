@@ -29,6 +29,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
+  Download,
   Sparkles,
   UploadCloud,
   ImagePlus,
@@ -55,6 +56,7 @@ export type CatalogEditorValue = {
   price: string;
   image: string;
   videoSrc: string;
+  model3dSrc: string;
   images: string[];
   aspectRatio: AspectRatio;
   tags: string[];
@@ -73,6 +75,7 @@ export type CatalogEditorPayload = {
   price: string;
   image: string;
   videoSrc: string;
+  model3dSrc: string;
   images: string[];
   aspectRatio: AspectRatio;
   tags: string[];
@@ -91,6 +94,7 @@ const EMPTY_VALUE: CatalogEditorValue = {
   price: "",
   image: "",
   videoSrc: "",
+  model3dSrc: "",
   images: [],
   aspectRatio: "square",
   tags: [],
@@ -213,10 +217,12 @@ export function CatalogEditor({
   const [form, setForm] = useState<CatalogEditorValue>(initialValue);
   const [saving, setSaving] = useState(false);
   const [uploadingMain, setUploadingMain] = useState(false);
+  const [uploadingModel, setUploadingModel] = useState(false);
   const [uploadingGallery, setUploadingGallery] = useState(false);
   const [error, setError] = useState("");
   const [slugTouched, setSlugTouched] = useState(Boolean(initialValue.slug));
   const mainUploadRef = useRef<HTMLInputElement | null>(null);
+  const modelUploadRef = useRef<HTMLInputElement | null>(null);
   const galleryUploadRef = useRef<HTMLInputElement | null>(null);
 
   const isEdit = Boolean(initial?.slug);
@@ -345,6 +351,33 @@ export function CatalogEditor({
     }
   };
 
+  const handleModelUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    setUploadingModel(true);
+    setError("");
+    try {
+      const result = await uploadSingleFile(file);
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+      const url = result.url;
+      if (!url) {
+        setError("Не удалось загрузить 3D модель.");
+        return;
+      }
+      update("model3dSrc", url);
+    } catch {
+      setError("Ошибка при загрузке 3D модели.");
+    } finally {
+      setUploadingModel(false);
+    }
+  };
+
   const validate = () => {
     if (!form.title.trim()) return "Укажите название товара.";
     if (!form.slug.trim()) return "Укажите ID товара.";
@@ -368,6 +401,7 @@ export function CatalogEditor({
       price: form.price.trim(),
       image: form.image.trim(),
       videoSrc: form.videoSrc.trim(),
+      model3dSrc: form.model3dSrc.trim(),
       images: form.images,
       aspectRatio: form.aspectRatio,
       tags: form.tags,
@@ -572,6 +606,50 @@ export function CatalogEditor({
                     onChange={(e) => update("videoSrc", e.target.value)}
                     placeholder="/videos/..."
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <Label>3D модель (необязательно)</Label>
+                    <input
+                      ref={modelUploadRef}
+                      type="file"
+                      accept=".glb,.gltf,.obj,.fbx,.stl,.usdz,.zip,.rar,.7z,.blend,.dae,.3ds"
+                      className="hidden"
+                      onChange={handleModelUpload}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => modelUploadRef.current?.click()}
+                      disabled={uploadingModel}
+                    >
+                      <UploadCloud size={16} />
+                      {uploadingModel ? "Загрузка..." : "Загрузить файл"}
+                    </Button>
+                  </div>
+                  <Input
+                    value={form.model3dSrc}
+                    onChange={(e) => update("model3dSrc", e.target.value)}
+                    placeholder="/uploads/model.glb"
+                  />
+                  {form.model3dSrc && (
+                    <div className="flex flex-wrap gap-2">
+                      <Button type="button" variant="outline" asChild>
+                        <a href={form.model3dSrc} download>
+                          <Download size={16} />
+                          Скачать 3D модель
+                        </a>
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => update("model3dSrc", "")}
+                      >
+                        Удалить файл
+                      </Button>
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">

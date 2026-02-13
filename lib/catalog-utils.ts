@@ -83,6 +83,7 @@ export function toArtwork(row: CatalogItemDbRow): Artwork {
     price: row.price,
     image: row.image,
     videoSrc: row.video_src || undefined,
+    model3dSrc: row.model_3d_src || undefined,
     images: Array.isArray(images)
       ? images.filter((x): x is string => typeof x === "string")
       : undefined,

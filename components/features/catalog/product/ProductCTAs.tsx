@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Info, Eye, ShoppingCart } from "lucide-react";
+import { Info, Eye, ShoppingCart, Download } from "lucide-react";
 import { OrderFormModal } from "@/components/modals/OrderFormModal";
 import { ExpertHelpModal } from "@/components/modals/ExpertHelpModal";
 import type { Artwork } from "@/data/artworks";
@@ -61,6 +61,22 @@ export const ProductCTAs = ({
           <ShoppingCart size={16} />
           Заказать
         </button>
+
+        {artwork?.model3dSrc && (
+          <a
+            href={artwork.model3dSrc}
+            download
+            className="w-full flex items-center justify-center gap-3 py-4 border border-border group hover:border-accent hover:bg-accent/5 transition-all"
+          >
+            <Download
+              size={16}
+              className="text-muted-foreground group-hover:text-accent transition-colors"
+            />
+            <span className="text-[10px] uppercase tracking-[0.3em] font-semibold">
+              Скачать 3D модель
+            </span>
+          </a>
+        )}
 
         {/* Дополнительные опции */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-6">

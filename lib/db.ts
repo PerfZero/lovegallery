@@ -71,6 +71,7 @@ const SCHEMA_SQL = `
     price TEXT NOT NULL,
     image TEXT NOT NULL,
     video_src TEXT,
+    model_3d_src TEXT,
     images_json TEXT,
     aspect_ratio TEXT NOT NULL DEFAULT 'square',
     tags_json TEXT,
@@ -87,6 +88,7 @@ const SCHEMA_SQL = `
 const CATALOG_MIGRATIONS = [
   `ALTER TABLE catalog_items ADD COLUMN artist TEXT`,
   `ALTER TABLE catalog_items ADD COLUMN video_src TEXT`,
+  `ALTER TABLE catalog_items ADD COLUMN model_3d_src TEXT`,
   `ALTER TABLE catalog_items ADD COLUMN images_json TEXT`,
   `ALTER TABLE catalog_items ADD COLUMN aspect_ratio TEXT NOT NULL DEFAULT 'square'`,
   `ALTER TABLE catalog_items ADD COLUMN tags_json TEXT`,
@@ -445,6 +447,7 @@ export type CatalogItemDbRow = {
   price: string;
   image: string;
   video_src: string | null;
+  model_3d_src: string | null;
   images_json: string | null;
   aspect_ratio: string;
   tags_json: string | null;
@@ -461,7 +464,7 @@ export function listCatalogItems(limit = 500, status?: string) {
   if (status) {
     return db
       .prepare(
-        `SELECT id, slug, category, title, artist, price, image, video_src, images_json, aspect_ratio, tags_json, description, is_new, options_json, status, sort_order, created_at, updated_at
+        `SELECT id, slug, category, title, artist, price, image, video_src, model_3d_src, images_json, aspect_ratio, tags_json, description, is_new, options_json, status, sort_order, created_at, updated_at
          FROM catalog_items
          WHERE status = ?
          ORDER BY sort_order ASC, datetime(created_at) DESC
@@ -472,7 +475,7 @@ export function listCatalogItems(limit = 500, status?: string) {
 
   return db
     .prepare(
-      `SELECT id, slug, category, title, artist, price, image, video_src, images_json, aspect_ratio, tags_json, description, is_new, options_json, status, sort_order, created_at, updated_at
+      `SELECT id, slug, category, title, artist, price, image, video_src, model_3d_src, images_json, aspect_ratio, tags_json, description, is_new, options_json, status, sort_order, created_at, updated_at
        FROM catalog_items
        ORDER BY sort_order ASC, datetime(created_at) DESC
        LIMIT ?`,
@@ -483,7 +486,7 @@ export function listCatalogItems(limit = 500, status?: string) {
 export function getCatalogItemById(id: number) {
   return db
     .prepare(
-      `SELECT id, slug, category, title, artist, price, image, video_src, images_json, aspect_ratio, tags_json, description, is_new, options_json, status, sort_order, created_at, updated_at
+      `SELECT id, slug, category, title, artist, price, image, video_src, model_3d_src, images_json, aspect_ratio, tags_json, description, is_new, options_json, status, sort_order, created_at, updated_at
        FROM catalog_items
        WHERE id = ?`,
     )
@@ -493,7 +496,7 @@ export function getCatalogItemById(id: number) {
 export function getCatalogItemBySlug(slug: string) {
   return db
     .prepare(
-      `SELECT id, slug, category, title, artist, price, image, video_src, images_json, aspect_ratio, tags_json, description, is_new, options_json, status, sort_order, created_at, updated_at
+      `SELECT id, slug, category, title, artist, price, image, video_src, model_3d_src, images_json, aspect_ratio, tags_json, description, is_new, options_json, status, sort_order, created_at, updated_at
        FROM catalog_items
        WHERE slug = ?`,
     )
@@ -508,6 +511,7 @@ export function createCatalogItem(input: {
   price: string;
   image: string;
   videoSrc?: string | null;
+  model3dSrc?: string | null;
   imagesJson?: string | null;
   aspectRatio?: string;
   tagsJson?: string | null;
@@ -519,9 +523,9 @@ export function createCatalogItem(input: {
 }) {
   const stmt = db.prepare(`
     INSERT INTO catalog_items
-      (slug, category, title, artist, price, image, video_src, images_json, aspect_ratio, tags_json, description, is_new, options_json, status, sort_order)
+      (slug, category, title, artist, price, image, video_src, model_3d_src, images_json, aspect_ratio, tags_json, description, is_new, options_json, status, sort_order)
     VALUES
-      (@slug, @category, @title, @artist, @price, @image, @video_src, @images_json, @aspect_ratio, @tags_json, @description, @is_new, @options_json, @status, @sort_order)
+      (@slug, @category, @title, @artist, @price, @image, @video_src, @model_3d_src, @images_json, @aspect_ratio, @tags_json, @description, @is_new, @options_json, @status, @sort_order)
   `);
 
   return stmt.run({
@@ -532,6 +536,7 @@ export function createCatalogItem(input: {
     price: input.price,
     image: input.image,
     video_src: input.videoSrc || null,
+    model_3d_src: input.model3dSrc || null,
     images_json: input.imagesJson || null,
     aspect_ratio: input.aspectRatio || "square",
     tags_json: input.tagsJson || null,
@@ -553,6 +558,7 @@ export function updateCatalogItem(
     price?: string;
     image?: string;
     videoSrc?: string | null;
+    model3dSrc?: string | null;
     imagesJson?: string | null;
     aspectRatio?: string;
     tagsJson?: string | null;
@@ -572,6 +578,10 @@ export function updateCatalogItem(
       case "videoSrc":
         updates.push("video_src = @video_src");
         params.video_src = value;
+        break;
+      case "model3dSrc":
+        updates.push("model_3d_src = @model_3d_src");
+        params.model_3d_src = value;
         break;
       case "imagesJson":
         updates.push("images_json = @images_json");

@@ -19,6 +19,7 @@ type ApiCatalogItem = {
   price: string;
   image: string;
   videoSrc?: string;
+  model3dSrc?: string;
   images?: string[];
   aspectRatio: "portrait" | "square" | "landscape";
   tags: string[];
@@ -42,6 +43,7 @@ function mapToEditorValue(item: ApiCatalogItem): CatalogEditorValue {
     price: item.price,
     image: item.image,
     videoSrc: item.videoSrc || "",
+    model3dSrc: item.model3dSrc || "",
     images: item.images || [],
     aspectRatio: item.aspectRatio || "square",
     tags: item.tags || [],

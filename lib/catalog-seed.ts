@@ -19,6 +19,7 @@ export function ensureCatalogSeeded() {
       price: artwork.price,
       image: artwork.image,
       videoSrc: artwork.videoSrc || null,
+      model3dSrc: artwork.model3dSrc || null,
       imagesJson: artwork.images ? JSON.stringify(artwork.images) : null,
       aspectRatio: artwork.aspectRatio,
       tagsJson: artwork.tags ? JSON.stringify(artwork.tags) : null,

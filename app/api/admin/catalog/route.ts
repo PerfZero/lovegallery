@@ -18,6 +18,7 @@ type ParsedCatalogPayload = {
   price: string;
   image: string;
   videoSrc: string | null;
+  model3dSrc: string | null;
   imagesJson: string | null;
   aspectRatio: string;
   tagsJson: string | null;
@@ -98,6 +99,7 @@ function normalizePayload(body: unknown): ParsedCatalogPayload | null {
     price,
     image,
     videoSrc: str(input.videoSrc) || null,
+    model3dSrc: str(input.model3dSrc) || null,
     imagesJson: images.length > 0 ? JSON.stringify(images) : null,
     aspectRatio,
     tagsJson: tags.length > 0 ? JSON.stringify(tags) : null,
