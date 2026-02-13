@@ -4,11 +4,15 @@ import path from "path";
 import { type AboutContent } from "@/data/about-content";
 import { type CatalogPageContentData } from "@/data/catalog-page-content";
 import { type FAQContentData } from "@/data/faq-content";
+import { type HomeContentData } from "@/data/home-content";
 import { type PaymentDeliveryContentData } from "@/data/payment-delivery-content";
+import { type SiteSettingsData } from "@/data/site-settings";
 import { resolveAboutContent } from "@/lib/about-content";
 import { resolveCatalogPageContent } from "@/lib/catalog-page-content";
 import { resolveFAQContent } from "@/lib/faq-content";
+import { resolveHomeContent } from "@/lib/home-content";
 import { resolvePaymentDeliveryContent } from "@/lib/payment-delivery-content";
+import { resolveSiteSettings } from "@/lib/site-settings";
 
 const DB_PATH =
   process.env.ADMIN_DB_PATH || path.join(process.cwd(), "data", "app.db");
@@ -643,7 +647,9 @@ export function deleteCatalogItem(id: number) {
 const ABOUT_CONTENT_KEY = "about_page_content";
 const CATALOG_PAGE_CONTENT_KEY = "catalog_page_content";
 const FAQ_CONTENT_KEY = "faq_page_content";
+const HOME_CONTENT_KEY = "home_page_content";
 const PAYMENT_DELIVERY_CONTENT_KEY = "payment_delivery_page_content";
+const SITE_SETTINGS_KEY = "site_settings";
 
 export function getAboutContent(): AboutContent {
   const row = db
@@ -704,6 +710,68 @@ export function saveCatalogPageContent(content: CatalogPageContentData) {
     .run({
       key: CATALOG_PAGE_CONTENT_KEY,
       value_json: JSON.stringify(content),
+    });
+}
+
+export function getHomeContent(): HomeContentData {
+  const row = db
+    .prepare(`SELECT value_json FROM site_content WHERE key = ?`)
+    .get(HOME_CONTENT_KEY) as { value_json?: string } | undefined;
+
+  if (!row?.value_json) {
+    return resolveHomeContent(null);
+  }
+
+  try {
+    return resolveHomeContent(JSON.parse(row.value_json));
+  } catch {
+    return resolveHomeContent(null);
+  }
+}
+
+export function saveHomeContent(content: HomeContentData) {
+  return db
+    .prepare(
+      `INSERT INTO site_content (key, value_json, updated_at)
+       VALUES (@key, @value_json, datetime('now'))
+       ON CONFLICT(key) DO UPDATE SET
+         value_json = excluded.value_json,
+         updated_at = datetime('now')`,
+    )
+    .run({
+      key: HOME_CONTENT_KEY,
+      value_json: JSON.stringify(content),
+    });
+}
+
+export function getSiteSettings(): SiteSettingsData {
+  const row = db
+    .prepare(`SELECT value_json FROM site_content WHERE key = ?`)
+    .get(SITE_SETTINGS_KEY) as { value_json?: string } | undefined;
+
+  if (!row?.value_json) {
+    return resolveSiteSettings(null);
+  }
+
+  try {
+    return resolveSiteSettings(JSON.parse(row.value_json));
+  } catch {
+    return resolveSiteSettings(null);
+  }
+}
+
+export function saveSiteSettings(settings: SiteSettingsData) {
+  return db
+    .prepare(
+      `INSERT INTO site_content (key, value_json, updated_at)
+       VALUES (@key, @value_json, datetime('now'))
+       ON CONFLICT(key) DO UPDATE SET
+         value_json = excluded.value_json,
+         updated_at = datetime('now')`,
+    )
+    .run({
+      key: SITE_SETTINGS_KEY,
+      value_json: JSON.stringify(settings),
     });
 }
 

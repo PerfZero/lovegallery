@@ -1,18 +1,69 @@
 "use client";
 
-import { siteConfig, footerConfig } from "@/data/site-config";
-import { footerLabels } from "@/data/content";
+import { useEffect, useState } from "react";
+import { siteSettings } from "@/data/site-settings";
+import { cloneSiteSettings, isSiteSettings } from "@/lib/site-settings";
 import { Z_INDEX } from "@/lib/constants";
 import { DSLabel, DSContainer } from "@/components/ui/design-system";
 
-// =============================================================================
-// Footer Component
-// =============================================================================
+const helpLinks = [
+  { label: "FAQ", href: "/faq" },
+  { label: "Связаться с нами", href: "/contact" },
+  { label: "Оплата и доставка", href: "/payment-delivery" },
+];
+
+const documentLinks = [
+  { label: "Политика конфиденциальности", href: "/privacy" },
+  { label: "Публичная оферта", href: "/offer" },
+  { label: "Реквизиты", href: "/legal-details" },
+];
 
 /**
  * Site footer refactored to use Design System components.
  */
 const Footer = () => {
+  const [settings, setSettings] = useState(() => cloneSiteSettings(siteSettings));
+
+  useEffect(() => {
+    let mounted = true;
+
+    fetch("/api/site-settings", { cache: "no-store" })
+      .then((res) => res.json())
+      .then((data) => {
+        if (!mounted) return;
+        if (!isSiteSettings(data?.item)) return;
+        setSettings(cloneSiteSettings(data.item));
+      })
+      .catch(() => {
+        // Keep defaults
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const contactLinks = [
+    { label: settings.contacts.email, href: `mailto:${settings.contacts.email}` },
+    {
+      label: settings.contacts.phone,
+      href: `tel:${settings.contacts.phone.replace(/\s/g, "")}`,
+    },
+  ];
+
+  const socialLinks = [
+    { label: "Instagram*", href: settings.contacts.instagram },
+    { label: "Telegram", href: settings.contacts.telegram },
+    { label: "WhatsApp", href: settings.contacts.whatsapp },
+  ];
+
+  const columns = [
+    { title: "Контакты", links: contactLinks },
+    { title: "Помощь", links: helpLinks },
+    { title: "Мы в сети", links: socialLinks },
+    { title: "Документы", links: documentLinks },
+  ];
+
   return (
     <footer
       className="w-full bg-background/80 backdrop-blur-xl pt-24 pb-16 border-t border-black/5"
@@ -20,8 +71,7 @@ const Footer = () => {
     >
       <DSContainer>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-16 md:gap-12 lg:gap-24">
-          {/* Dynamic Footer Columns */}
-          {footerConfig.map((column, index) => (
+          {columns.map((column) => (
             <div key={column.title} className="space-y-6">
               <DSLabel className="text-accent">{column.title}</DSLabel>
               <div className="flex flex-col space-y-3">
@@ -42,12 +92,11 @@ const Footer = () => {
             </div>
           ))}
 
-          {/* Credits & Legal Column */}
           <div className="flex flex-col justify-end items-start md:items-end md:text-right space-y-6">
             <div className="space-y-4">
               <div className="space-y-1">
                 <p className="text-[10px] tracking-widest text-muted-foreground">
-                  © Галерея интерьерного искусства Любовь 2014 – 2026.
+                  © Галерея интерьерного искусства Любовь 2014 - 2026.
                 </p>
                 <p className="text-[10px] tracking-widest text-muted-foreground">
                   Все права зарегистрированы. Копирование материалов запрещено!

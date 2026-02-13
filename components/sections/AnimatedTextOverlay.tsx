@@ -1,12 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { homeContent } from "@/data/home-content";
 
 /**
  * Displays "ИСКУССТВО" and "ЭТО ПО ЛЮБВИ" with a letter-by-letter animation
  * during the card dealing animation. Appears briefly and then fades out.
  */
-const AnimatedTextOverlay = () => {
+interface AnimatedTextOverlayProps {
+  line1?: string;
+  line2?: string;
+}
+
+const AnimatedTextOverlay = ({
+  line1 = homeContent.animatedOverlay.line1,
+  line2 = homeContent.animatedOverlay.line2,
+}: AnimatedTextOverlayProps) => {
   const [isVisible, setIsVisible] = useState(true);
   const [showText, setShowText] = useState(true);
 
@@ -56,10 +65,10 @@ const AnimatedTextOverlay = () => {
       >
         <div className="flex flex-col items-center gap-4 md:gap-8 max-w-[90vw]">
           {/* Line 1: ИСКУССТВО */}
-          <AnimatedLine text="ИСКУССТВО" delay={0} />
+          <AnimatedLine text={line1} delay={0} />
 
           {/* Line 2: ЭТО ПО ЛЮБВИ */}
-          <AnimatedLine text="ЭТО ПО ЛЮБВИ" delay={0} />
+          <AnimatedLine text={line2} delay={0} />
         </div>
       </div>
     </>

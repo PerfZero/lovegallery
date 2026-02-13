@@ -11,6 +11,7 @@ const routeLabels: Record<string, string> = {
   blog: "Блог",
   new: "Новая запись",
   requests: "Заявки",
+  home: "Главная",
   settings: "Настройки",
   about: "О нас",
   "payment-delivery": "Оплата и доставка",

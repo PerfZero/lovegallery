@@ -1,13 +1,12 @@
 "use client";
 
 import { contactConfig } from "@/data/site-config";
-import { contactContent } from "@/data/content";
+import { homeContent, type HomeContactContent } from "@/data/home-content";
 import { Z_INDEX } from "@/lib/constants";
 import {
   DSHeading,
   DSLabel,
   DSDecorativeAsterisk,
-  DSText,
 } from "@/components/ui/design-system";
 
 // =============================================================================
@@ -17,13 +16,17 @@ import {
 interface ContactSectionProps {
   /** Opacity value for scroll-based fade effect (0-1) */
   opacity: number;
+  content?: HomeContactContent;
 }
 
 /**
  * Contact CTA section refactored for the Design System.
  */
-const ContactSection = ({ opacity }: ContactSectionProps) => {
-  const { headline, cta } = contactContent;
+const ContactSection = ({
+  opacity,
+  content = homeContent.contact,
+}: ContactSectionProps) => {
+  const { headline, cta } = content;
 
   return (
     <div

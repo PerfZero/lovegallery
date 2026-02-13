@@ -91,8 +91,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
           <CookieConsent />
         </TransitionProvider>
 
-        {/* Analytics - replace with your actual IDs */}
-        <Analytics yandexMetrikaId="" googleAnalyticsId="" />
+        <Analytics yandexMetrikaId="106819077" googleAnalyticsId="" />
       </body>
     </html>
   );

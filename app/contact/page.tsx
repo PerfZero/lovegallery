@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Send,
@@ -15,10 +15,14 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { DSContainer, DSHeading, DSText } from "@/components/ui/design-system";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
-import { contactConfig } from "@/data/site-config";
+import { siteSettings } from "@/data/site-settings";
 import { formatPhoneNumber, isValidEmail, isValidPhone } from "@/lib/format";
+import { cloneSiteSettings, isSiteSettings } from "@/lib/site-settings";
 
 export default function ContactPage() {
+  const [settings, setSettings] = useState(() =>
+    cloneSiteSettings(siteSettings),
+  );
   const [formState, setFormState] = useState({
     name: "",
     email: "",
@@ -29,6 +33,24 @@ export default function ContactPage() {
   const [errors, setErrors] = useState<{ [key: string]: boolean }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    fetch("/api/site-settings", { cache: "no-store" })
+      .then((res) => res.json())
+      .then((data) => {
+        if (!mounted) return;
+        if (!isSiteSettings(data?.item)) return;
+        setSettings(cloneSiteSettings(data.item));
+      })
+      .catch(() => {
+        // Keep defaults
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const validate = () => {
     const newErrors: { [key: string]: boolean } = {};
@@ -117,6 +139,10 @@ export default function ContactPage() {
     }
   };
 
+  const privacyPrefix = settings.contactPage.privacyText
+    .replace(/\s*политикой\s+конфиденциальности\s*$/i, "")
+    .trim();
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Header />
@@ -132,7 +158,7 @@ export default function ContactPage() {
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-accent/10 rounded-full mb-8">
                 <MessageCircle size={14} className="text-accent" />
                 <span className="text-[10px] uppercase tracking-[0.2em] text-accent font-medium">
-                  Связь с нами
+                  {settings.contactPage.heroBadge}
                 </span>
               </div>
 
@@ -140,11 +166,14 @@ export default function ContactPage() {
                 level="h1"
                 className="text-4xl md:text-5xl lg:text-6xl mb-6"
               >
-                Свяжитесь <span className="italic">с нами</span>
+                {settings.contactPage.heroTitle}{" "}
+                <span className="italic">
+                  {settings.contactPage.heroTitleAccent}
+                </span>
               </DSHeading>
 
               <DSText className="text-lg text-muted-foreground">
-                Мы всегда рады ответить на ваши вопросы и помочь с выбором
+                {settings.contactPage.heroDescription}
               </DSText>
             </div>
           </DSContainer>
@@ -155,11 +184,13 @@ export default function ContactPage() {
             {/* Contact Info */}
             <div className="lg:col-span-1 space-y-8">
               <div>
-                <h2 className="text-2xl font-display italic mb-6">Контакты</h2>
+                <h2 className="text-2xl font-display italic mb-6">
+                  {settings.contactPage.infoTitle}
+                </h2>
 
                 <div className="space-y-6">
                   <a
-                    href={`tel:${contactConfig.phone.replace(/\s/g, "")}`}
+                    href={`tel:${settings.contacts.phone.replace(/\s/g, "")}`}
                     className="flex items-start gap-4 group"
                   >
                     <div className="w-12 h-12 bg-accent/10 rounded-full flex items-center justify-center shrink-0 group-hover:bg-accent/20 transition-colors">
@@ -170,13 +201,13 @@ export default function ContactPage() {
                         Телефон
                       </p>
                       <p className="text-lg font-medium group-hover:text-accent transition-colors">
-                        {contactConfig.phone}
+                        {settings.contacts.phone}
                       </p>
                     </div>
                   </a>
 
                   <a
-                    href={`mailto:${contactConfig.email}`}
+                    href={`mailto:${settings.contacts.email}`}
                     className="flex items-start gap-4 group"
                   >
                     <div className="w-12 h-12 bg-accent/10 rounded-full flex items-center justify-center shrink-0 group-hover:bg-accent/20 transition-colors">
@@ -187,7 +218,7 @@ export default function ContactPage() {
                         Email
                       </p>
                       <p className="text-lg font-medium group-hover:text-accent transition-colors">
-                        {contactConfig.email}
+                        {settings.contacts.email}
                       </p>
                     </div>
                   </a>
@@ -200,9 +231,11 @@ export default function ContactPage() {
                       <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-1">
                         Часы работы
                       </p>
-                      <p className="font-medium">Пн-Пт: 10:00 - 19:00</p>
+                      <p className="font-medium">
+                        {settings.contacts.workHoursWeekdays}
+                      </p>
                       <p className="text-muted-foreground text-sm">
-                        Сб-Вс: по записи
+                        {settings.contacts.workHoursWeekend}
                       </p>
                     </div>
                   </div>
@@ -215,9 +248,9 @@ export default function ContactPage() {
                       <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-1">
                         Адрес
                       </p>
-                      <p className="font-medium">Москва, ул. Примерная, 1</p>
+                      <p className="font-medium">{settings.contacts.address}</p>
                       <p className="text-muted-foreground text-sm">
-                        Шоу-рум по записи
+                        {settings.contacts.showroomNote}
                       </p>
                     </div>
                   </div>
@@ -231,7 +264,7 @@ export default function ContactPage() {
                 </p>
                 <div className="flex gap-3">
                   <a
-                    href={contactConfig.telegram}
+                    href={settings.contacts.telegram}
                     target="_blank"
                     rel="noreferrer"
                     className="px-6 py-3 bg-[#0088cc] text-white text-sm font-medium rounded-lg hover:opacity-90 transition-opacity"
@@ -239,7 +272,7 @@ export default function ContactPage() {
                     Telegram
                   </a>
                   <a
-                    href={contactConfig.whatsapp}
+                    href={settings.contacts.whatsapp}
                     target="_blank"
                     rel="noreferrer"
                     className="px-6 py-3 bg-[#25D366] text-white text-sm font-medium rounded-lg hover:opacity-90 transition-opacity"
@@ -254,7 +287,7 @@ export default function ContactPage() {
             <div className="lg:col-span-2">
               <div className="bg-muted/20 p-8 md:p-12 rounded-lg">
                 <h2 className="text-2xl font-display italic mb-8">
-                  Напишите нам
+                  {settings.contactPage.formTitle}
                 </h2>
 
                 {isSubmitted ? (
@@ -267,10 +300,10 @@ export default function ContactPage() {
                       <CheckCircle size={40} className="text-green-600" />
                     </div>
                     <h3 className="text-2xl font-display italic mb-4">
-                      Сообщение отправлено!
+                      {settings.contactPage.successTitle}
                     </h3>
                     <p className="text-muted-foreground">
-                      Мы свяжемся с вами в ближайшее время
+                      {settings.contactPage.successDescription}
                     </p>
                   </motion.div>
                 ) : (
@@ -374,7 +407,7 @@ export default function ContactPage() {
 
                     <div className="flex items-center justify-between gap-4">
                       <p className="text-xs text-muted-foreground">
-                        Нажимая кнопку, вы соглашаетесь с{" "}
+                        {privacyPrefix}{" "}
                         <a
                           href="/privacy"
                           className="underline hover:text-accent"
@@ -392,7 +425,7 @@ export default function ContactPage() {
                         ) : (
                           <>
                             <Send size={14} />
-                            Отправить
+                            {settings.contactPage.sendButtonLabel}
                           </>
                         )}
                       </button>

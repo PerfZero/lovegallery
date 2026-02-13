@@ -11,6 +11,7 @@ import {
   LogOut,
   Inbox,
   ExternalLink,
+  House,
   Info,
   HandCoins,
   CircleHelp,
@@ -29,6 +30,11 @@ const menuItems = [
     title: "Заявки",
     href: "/admin/requests",
     icon: Inbox,
+  },
+  {
+    title: "Главная",
+    href: "/admin/home",
+    icon: House,
   },
   {
     title: "Каталог",
