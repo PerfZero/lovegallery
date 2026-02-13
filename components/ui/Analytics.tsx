@@ -7,6 +7,11 @@ interface AnalyticsProps {
   googleAnalyticsId?: string;
 }
 
+type WindowWithAnalytics = Window & {
+  ym?: (...args: unknown[]) => void;
+  gtag?: (...args: unknown[]) => void;
+};
+
 /**
  * Analytics component for Yandex.Metrika and Google Analytics
  *
@@ -93,13 +98,16 @@ export function trackEvent(
   eventName: string,
   eventParams?: Record<string, unknown>,
 ) {
+  const analyticsWindow =
+    typeof window !== "undefined" ? (window as WindowWithAnalytics) : undefined;
+
   // Yandex.Metrika
-  if (typeof window !== "undefined" && (window as any).ym) {
-    (window as any).ym("reachGoal", eventName, eventParams);
+  if (analyticsWindow?.ym) {
+    analyticsWindow.ym("reachGoal", eventName, eventParams);
   }
 
   // Google Analytics
-  if (typeof window !== "undefined" && (window as any).gtag) {
-    (window as any).gtag("event", eventName, eventParams);
+  if (analyticsWindow?.gtag) {
+    analyticsWindow.gtag("event", eventName, eventParams);
   }
 }
