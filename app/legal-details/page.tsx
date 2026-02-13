@@ -139,7 +139,7 @@ export default function LegalDetailsPage() {
                       href="tel:+79991234567"
                       className="text-sm text-accent hover:underline"
                     >
-                      +7 (999) 123-45-67
+                      +7 495 477-34-34
                     </a>
                   </div>
                   <div>

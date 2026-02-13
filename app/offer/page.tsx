@@ -68,7 +68,7 @@ export default function OfferPage() {
                 </p>
                 <ul className="list-disc list-inside text-sm text-foreground/80 space-y-2">
                   <li>Через форму заказа на сайте</li>
-                  <li>По телефону: +7 (999) 123-45-67</li>
+                  <li>По телефону: +7 495 477-34-34</li>
                   <li>По электронной почте: order@lovegallery.ru</li>
                 </ul>
               </div>
@@ -129,7 +129,7 @@ export default function OfferPage() {
                       order@lovegallery.ru
                     </a>
                   </p>
-                  <p>Телефон: +7 (999) 123-45-67</p>
+                  <p>Телефон: +7 495 477-34-34</p>
                 </div>
               </div>
             </section>

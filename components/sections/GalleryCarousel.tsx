@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, forwardRef, useEffect, useRef, useState } from "react";
+import { useMemo, forwardRef, useEffect, useRef } from "react";
 import Link from "next/link";
 import { artworks, type Artwork, categoryThemes } from "@/data/artworks";
 import {
@@ -31,6 +31,11 @@ interface CarouselItem {
   rounded: RoundedVariant;
 }
 
+// Speed tuning (change these values)
+const DESKTOP_LOOP_AUTO_SCROLL_PX_PER_SECOND = 40;
+const MOBILE_LOOP_AUTO_SCROLL_PX_PER_SECOND = 50;
+const MOBILE_LOOP_RESUME_DELAY_MS = 900;
+
 /**
  * Infinite marquee gallery with card-dealing entrance animation
  * Features:
@@ -58,128 +63,150 @@ const GalleryCarousel = () => {
     });
   }, []);
 
-  // Duplicate items for seamless infinite scroll
+  // Triple items for seamless infinite scroll
   const marqueeItems = useMemo(
-    () => [...carouselItems, ...carouselItems],
+    () => [...carouselItems, ...carouselItems, ...carouselItems],
     [carouselItems],
   );
 
   const isMobile = useIsMobile();
   const sectionRef = useRef<HTMLElement | null>(null);
   const trackRef = useRef<HTMLDivElement | null>(null);
-  const [marqueeDuration, setMarqueeDuration] = useState(28);
+  const userInteractingRef = useRef(false);
+  const resumeTimeoutRef = useRef<number | null>(null);
 
   // Use custom hook for complex entrance animation logic
   const { imageRefs, isPreloading } = useGalleryAnimation({ isMobile });
 
-  const marqueeClassName = isMobile
-    ? `flex w-max gap-0 animate-marquee whitespace-nowrap min-w-full ${isPreloading ? "paused" : ""}`
-    : `flex w-max gap-0 animate-marquee whitespace-nowrap ${isPreloading ? "paused" : ""}`;
+  const marqueeClassName = "flex w-max gap-0 whitespace-nowrap min-w-full";
 
   useEffect(() => {
-    const track = trackRef.current;
-    if (!track) return;
+    if (isPreloading) return;
 
-    const pxPerSecond = isMobile ? 190 : 240;
-    let rafId: number | null = null;
-
-    const updateDuration = () => {
-      if (rafId !== null) {
-        window.cancelAnimationFrame(rafId);
-      }
-
-      rafId = window.requestAnimationFrame(() => {
-        // Track consists of two duplicated sets, animation shifts by 50% (= one set width)
-        const cycleDistancePx = track.scrollWidth / 2;
-        if (!cycleDistancePx) return;
-
-        const rawDuration = cycleDistancePx / pxPerSecond;
-        const clampedDuration = Math.max(14, Math.min(42, rawDuration));
-
-        setMarqueeDuration((prev) =>
-          Math.abs(prev - clampedDuration) > 0.1 ? clampedDuration : prev,
-        );
-      });
-    };
-
-    updateDuration();
-
-    const observer = new ResizeObserver(updateDuration);
-    observer.observe(track);
-    window.addEventListener("resize", updateDuration);
-
-    return () => {
-      if (rafId !== null) {
-        window.cancelAnimationFrame(rafId);
-      }
-      observer.disconnect();
-      window.removeEventListener("resize", updateDuration);
-    };
-  }, [isMobile, marqueeItems.length]);
-
-  useEffect(() => {
     const section = sectionRef.current;
     const track = trackRef.current;
     if (!section || !track) return;
 
-    const params = new URLSearchParams(window.location.search);
-    const debugEnabled = params.get("debugMarquee") === "1";
-    if (!debugEnabled) return;
+    const autoPxPerSecond = isMobile
+      ? MOBILE_LOOP_AUTO_SCROLL_PX_PER_SECOND
+      : DESKTOP_LOOP_AUTO_SCROLL_PX_PER_SECOND;
+    let rafId: number | null = null;
+    let lastTimestamp = 0;
+    let dragging = false;
+    let dragStartX = 0;
+    let dragStartScroll = 0;
 
-    const getTranslateX = () => {
-      const transform = window.getComputedStyle(track).transform;
-      if (!transform || transform === "none") return 0;
-      const match = transform.match(/^matrix\((.+)\)$/);
-      if (!match) return 0;
-      const values = match[1].split(",").map((v) => Number(v.trim()));
-      return Number.isFinite(values[4]) ? values[4] : 0;
+    const getSegmentWidth = () => track.scrollWidth / 3;
+
+    const normalizeLoopPosition = () => {
+      const segmentWidth = getSegmentWidth();
+      if (!segmentWidth) return;
+
+      const minEdge = segmentWidth * 0.5;
+      const maxEdge = segmentWidth * 1.5;
+
+      if (section.scrollLeft < minEdge) {
+        section.scrollLeft += segmentWidth;
+      } else if (section.scrollLeft > maxEdge) {
+        section.scrollLeft -= segmentWidth;
+      }
     };
 
-    const logState = (label: string) => {
-      console.log("[marquee]", label, {
-        isMobile,
-        isPreloading,
-        className: track.className,
-        scrollLeft: section.scrollLeft,
-        translateX: getTranslateX(),
-      });
+    const pauseAuto = () => {
+      userInteractingRef.current = true;
+      if (resumeTimeoutRef.current !== null) {
+        window.clearTimeout(resumeTimeoutRef.current);
+      }
     };
 
-    const onStart = () => logState("animationstart");
-    const onIteration = () => logState("animationiteration");
-    const onCancel = () => logState("animationcancel");
-    const onEnd = () => logState("animationend");
-    const onScroll = () => logState("scroll");
+    const resumeAutoSoon = () => {
+      if (resumeTimeoutRef.current !== null) {
+        window.clearTimeout(resumeTimeoutRef.current);
+      }
+      resumeTimeoutRef.current = window.setTimeout(() => {
+        userInteractingRef.current = false;
+      }, MOBILE_LOOP_RESUME_DELAY_MS);
+    };
 
-    track.addEventListener("animationstart", onStart);
-    track.addEventListener("animationiteration", onIteration);
-    track.addEventListener("animationcancel", onCancel);
-    track.addEventListener("animationend", onEnd);
+    const animate = (timestamp: number) => {
+      if (lastTimestamp === 0) {
+        lastTimestamp = timestamp;
+      }
+      const dt = (timestamp - lastTimestamp) / 1000;
+      lastTimestamp = timestamp;
+
+      if (!userInteractingRef.current) {
+        section.scrollLeft += autoPxPerSecond * dt;
+        normalizeLoopPosition();
+      }
+
+      rafId = window.requestAnimationFrame(animate);
+    };
+
+    // Start from middle copy to allow seamless left/right manual swipes.
+    section.scrollLeft = getSegmentWidth();
+    normalizeLoopPosition();
+
+    const onTouchStart = () => pauseAuto();
+    const onTouchEnd = () => resumeAutoSoon();
+    const onMouseDown = (event: MouseEvent) => {
+      dragging = true;
+      dragStartX = event.clientX;
+      dragStartScroll = section.scrollLeft;
+      section.style.cursor = "grabbing";
+      pauseAuto();
+    };
+    const onMouseMove = (event: MouseEvent) => {
+      if (!dragging) return;
+      const delta = event.clientX - dragStartX;
+      section.scrollLeft = dragStartScroll - delta;
+      normalizeLoopPosition();
+    };
+    const endMouseDrag = () => {
+      if (!dragging) return;
+      dragging = false;
+      section.style.cursor = "";
+      resumeAutoSoon();
+    };
+    const onScroll = () => normalizeLoopPosition();
+
+    section.addEventListener("touchstart", onTouchStart, { passive: true });
+    section.addEventListener("touchend", onTouchEnd, { passive: true });
+    section.addEventListener("mousedown", onMouseDown);
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", endMouseDrag);
+    section.addEventListener("mouseleave", endMouseDrag);
     section.addEventListener("scroll", onScroll, { passive: true });
 
-    logState("mounted");
-    const interval = window.setInterval(() => logState("tick"), 1000);
+    rafId = window.requestAnimationFrame(animate);
 
     return () => {
-      window.clearInterval(interval);
-      track.removeEventListener("animationstart", onStart);
-      track.removeEventListener("animationiteration", onIteration);
-      track.removeEventListener("animationcancel", onCancel);
-      track.removeEventListener("animationend", onEnd);
+      if (rafId !== null) {
+        window.cancelAnimationFrame(rafId);
+      }
+      if (resumeTimeoutRef.current !== null) {
+        window.clearTimeout(resumeTimeoutRef.current);
+        resumeTimeoutRef.current = null;
+      }
+      section.removeEventListener("touchstart", onTouchStart);
+      section.removeEventListener("touchend", onTouchEnd);
+      section.removeEventListener("mousedown", onMouseDown);
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", endMouseDrag);
+      section.removeEventListener("mouseleave", endMouseDrag);
       section.removeEventListener("scroll", onScroll);
     };
-  }, [isMobile, isPreloading]);
+  }, [isMobile, isPreloading, marqueeItems.length]);
 
   return (
     <section
       ref={sectionRef}
       style={{ overflowAnchor: "none" }}
-      className={`h-[40vh] md:h-[50vh] flex items-start select-none pb-4 md:pb-6 w-full transition-all duration-700 pointer-events-auto ${isPreloading ? "overflow-visible" : "overflow-x-auto md:overflow-hidden"} touch-pan-x overscroll-x-contain snap-none`}
+      className={`h-[40vh] md:h-[50vh] flex items-start select-none pb-4 md:pb-6 w-full transition-all duration-700 pointer-events-auto ${isPreloading ? "overflow-visible" : "overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"} touch-pan-x overscroll-x-contain snap-none md:cursor-grab`}
     >
       <div className="relative flex w-full">
         <div
           ref={trackRef}
-          style={{ animationDuration: `${marqueeDuration}s` }}
           className={`${marqueeClassName} will-change-transform`}
         >
           {marqueeItems.map((item, index) => (
