@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, forwardRef } from "react";
+import { useMemo, forwardRef, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { artworks, type Artwork, categoryThemes } from "@/data/artworks";
 import {
@@ -58,27 +58,130 @@ const GalleryCarousel = () => {
     });
   }, []);
 
-  // Triple items for seamless infinite scroll
+  // Duplicate items for seamless infinite scroll
   const marqueeItems = useMemo(
-    () => [...carouselItems, ...carouselItems, ...carouselItems],
+    () => [...carouselItems, ...carouselItems],
     [carouselItems],
   );
 
   const isMobile = useIsMobile();
+  const sectionRef = useRef<HTMLElement | null>(null);
+  const trackRef = useRef<HTMLDivElement | null>(null);
+  const [marqueeDuration, setMarqueeDuration] = useState(28);
 
   // Use custom hook for complex entrance animation logic
   const { imageRefs, isPreloading } = useGalleryAnimation({ isMobile });
 
   const marqueeClassName = isMobile
-    ? "flex gap-0 whitespace-nowrap justify-center min-w-full"
-    : `flex gap-0 animate-marquee whitespace-nowrap hover:[animation-play-state:paused] ${isPreloading ? "paused" : ""}`;
+    ? `flex w-max gap-0 animate-marquee whitespace-nowrap min-w-full ${isPreloading ? "paused" : ""}`
+    : `flex w-max gap-0 animate-marquee whitespace-nowrap ${isPreloading ? "paused" : ""}`;
+
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track) return;
+
+    const pxPerSecond = isMobile ? 190 : 240;
+    let rafId: number | null = null;
+
+    const updateDuration = () => {
+      if (rafId !== null) {
+        window.cancelAnimationFrame(rafId);
+      }
+
+      rafId = window.requestAnimationFrame(() => {
+        // Track consists of two duplicated sets, animation shifts by 50% (= one set width)
+        const cycleDistancePx = track.scrollWidth / 2;
+        if (!cycleDistancePx) return;
+
+        const rawDuration = cycleDistancePx / pxPerSecond;
+        const clampedDuration = Math.max(14, Math.min(42, rawDuration));
+
+        setMarqueeDuration((prev) =>
+          Math.abs(prev - clampedDuration) > 0.1 ? clampedDuration : prev,
+        );
+      });
+    };
+
+    updateDuration();
+
+    const observer = new ResizeObserver(updateDuration);
+    observer.observe(track);
+    window.addEventListener("resize", updateDuration);
+
+    return () => {
+      if (rafId !== null) {
+        window.cancelAnimationFrame(rafId);
+      }
+      observer.disconnect();
+      window.removeEventListener("resize", updateDuration);
+    };
+  }, [isMobile, marqueeItems.length]);
+
+  useEffect(() => {
+    const section = sectionRef.current;
+    const track = trackRef.current;
+    if (!section || !track) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const debugEnabled = params.get("debugMarquee") === "1";
+    if (!debugEnabled) return;
+
+    const getTranslateX = () => {
+      const transform = window.getComputedStyle(track).transform;
+      if (!transform || transform === "none") return 0;
+      const match = transform.match(/^matrix\((.+)\)$/);
+      if (!match) return 0;
+      const values = match[1].split(",").map((v) => Number(v.trim()));
+      return Number.isFinite(values[4]) ? values[4] : 0;
+    };
+
+    const logState = (label: string) => {
+      console.log("[marquee]", label, {
+        isMobile,
+        isPreloading,
+        className: track.className,
+        scrollLeft: section.scrollLeft,
+        translateX: getTranslateX(),
+      });
+    };
+
+    const onStart = () => logState("animationstart");
+    const onIteration = () => logState("animationiteration");
+    const onCancel = () => logState("animationcancel");
+    const onEnd = () => logState("animationend");
+    const onScroll = () => logState("scroll");
+
+    track.addEventListener("animationstart", onStart);
+    track.addEventListener("animationiteration", onIteration);
+    track.addEventListener("animationcancel", onCancel);
+    track.addEventListener("animationend", onEnd);
+    section.addEventListener("scroll", onScroll, { passive: true });
+
+    logState("mounted");
+    const interval = window.setInterval(() => logState("tick"), 1000);
+
+    return () => {
+      window.clearInterval(interval);
+      track.removeEventListener("animationstart", onStart);
+      track.removeEventListener("animationiteration", onIteration);
+      track.removeEventListener("animationcancel", onCancel);
+      track.removeEventListener("animationend", onEnd);
+      section.removeEventListener("scroll", onScroll);
+    };
+  }, [isMobile, isPreloading]);
 
   return (
     <section
-      className={`h-[40vh] md:h-[50vh] flex items-start select-none pb-4 md:pb-6 w-full transition-all duration-700 pointer-events-auto ${isPreloading ? "overflow-visible" : "overflow-x-auto md:overflow-hidden"} touch-pan-x overscroll-x-contain snap-x snap-mandatory`}
+      ref={sectionRef}
+      style={{ overflowAnchor: "none" }}
+      className={`h-[40vh] md:h-[50vh] flex items-start select-none pb-4 md:pb-6 w-full transition-all duration-700 pointer-events-auto ${isPreloading ? "overflow-visible" : "overflow-x-auto md:overflow-hidden"} touch-pan-x overscroll-x-contain snap-none`}
     >
       <div className="relative flex w-full">
-        <div className={marqueeClassName}>
+        <div
+          ref={trackRef}
+          style={{ animationDuration: `${marqueeDuration}s` }}
+          className={`${marqueeClassName} will-change-transform`}
+        >
           {marqueeItems.map((item, index) => (
             <GalleryCard
               key={`${item.artwork.id}-${index}`}
@@ -154,7 +257,7 @@ const GalleryCard = forwardRef<HTMLDivElement, GalleryCardProps>(
       <div
         ref={ref}
         style={style}
-        className={`inline-block transition-transform duration-700 hover:scale-[1.02] relative group mt-[var(--mt-mob)] md:mt-[var(--mt-desk)] ml-[var(--ml-mob)] md:ml-[var(--ml-desk)] will-change-transform z-${zIndex} ${isMobile ? "snap-start" : ""}`}
+        className={`inline-block shrink-0 transition-transform duration-700 hover:scale-[1.02] relative group mt-[var(--mt-mob)] md:mt-[var(--mt-desk)] ml-[var(--ml-mob)] md:ml-[var(--ml-desk)] will-change-transform z-${zIndex} ${isMobile ? "snap-start" : ""}`}
       >
         <Link href={href} className="block cursor-pointer">
           <div

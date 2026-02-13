@@ -69,7 +69,7 @@ export default function OfferPage() {
                 <ul className="list-disc list-inside text-sm text-foreground/80 space-y-2">
                   <li>Через форму заказа на сайте</li>
                   <li>По телефону: +7 (999) 123-45-67</li>
-                  <li>По электронной почте: info@lubov-art.ru</li>
+                  <li>По электронной почте: order@lovegallery.ru</li>
                 </ul>
               </div>
 
@@ -123,10 +123,10 @@ export default function OfferPage() {
                   <p>
                     Email:{" "}
                     <a
-                      href="mailto:info@lubov-art.ru"
+                      href="mailto:order@lovegallery.ru"
                       className="text-accent hover:underline"
                     >
-                      info@lubov-art.ru
+                      order@lovegallery.ru
                     </a>
                   </p>
                   <p>Телефон: +7 (999) 123-45-67</p>

@@ -191,7 +191,7 @@ export default function AboutPage() {
                               На видео представлены панно UNIvers и ковер Уно из
                               нашей коллекции{" "}
                               <Link
-                                href="/catalog/collections"
+                                href="/catalog/collections/coll-nachalo/"
                                 className="text-accent underline decoration-accent/30 hover:decoration-accent transition-all"
                               >
                                 НАЧАЛО

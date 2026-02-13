@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { catalogContent, type CatalogCategory } from '@/data/catalog';
-import { DSHeading, DSLabel, DSText, DSContainer, DSDecorativeAsterisk } from '@/components/ui/design-system';
+import { DSHeading, DSContainer, DSDecorativeAsterisk } from '@/components/ui/design-system';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
@@ -135,17 +135,17 @@ function CategoryItem({
                 onMouseLeave={() => onHover(null)}
                 className="group relative py-8 md:py-12 cursor-pointer transition-colors duration-500"
             >
-                <div className="flex flex-col md:flex-row justify-between items-center gap-4 relative z-10">
-                    <h3 className="text-3xl md:text-5xl lg:text-6xl font-display italic font-light group-hover:text-accent group-hover:translate-x-4 transition-all duration-500">
+                <div className="relative z-10 grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_auto] md:items-center md:gap-8">
+                    <h3 className="text-3xl md:text-5xl lg:text-6xl font-display italic font-light group-hover:text-accent group-hover:translate-x-4 transition-all duration-500 text-left">
                         {category.title}
                     </h3>
-                    <div className="flex items-center gap-8">
-                        <span className="text-xs md:text-sm uppercase tracking-widest text-muted-foreground group-hover:text-foreground transition-colors duration-300">
+                    <div className="flex items-center gap-8 md:contents">
+                        <span className="text-xs md:text-sm uppercase tracking-widest text-muted-foreground group-hover:text-foreground transition-colors duration-300 md:max-w-[38ch] md:justify-self-start text-left">
                             {category.description}
                         </span>
 
                         {/* Explicit Button Style */}
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 md:justify-self-end">
                             <span className="text-[10px] uppercase tracking-[0.2em] font-semibold text-accent opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 transition-all duration-500">
                                 Смотреть
                             </span>

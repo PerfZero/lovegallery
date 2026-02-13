@@ -106,10 +106,10 @@ export default function PrivacyPage() {
                   По всем вопросам, связанным с обработкой персональных данных,
                   вы можете обратиться по адресу:{" "}
                   <a
-                    href="mailto:info@lubov-art.ru"
+                    href="mailto:order@lovegallery.ru"
                     className="text-accent hover:underline"
                   >
-                    info@lubov-art.ru
+                    order@lovegallery.ru
                   </a>
                 </p>
               </div>

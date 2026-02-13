@@ -147,10 +147,10 @@ export default function LegalDetailsPage() {
                       Email
                     </p>
                     <a
-                      href="mailto:info@lubov-art.ru"
+                      href="mailto:order@lovegallery.ru"
                       className="text-sm text-accent hover:underline"
                     >
-                      info@lubov-art.ru
+                      order@lovegallery.ru
                     </a>
                   </div>
                   <div>

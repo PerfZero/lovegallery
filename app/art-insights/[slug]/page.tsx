@@ -112,7 +112,7 @@ export default async function ArticlePage({ params }: PageProps) {
 
       <main>
         {/* Hero Section */}
-        <section className="relative h-[60vh] md:h-[70vh] overflow-hidden">
+        <section className="relative h-[90vh] md:h-[70vh] overflow-hidden">
           {/* Background Image */}
           <img
             src={article.image || "/images/gallery-1.webp"}

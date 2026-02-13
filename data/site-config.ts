@@ -34,7 +34,7 @@ export const siteConfig = {
  * Contact information
  */
 export const contactConfig: ContactInfo = {
-  email: "info@lubov-art.ru",
+  email: "order@lovegallery.ru",
   phone: "+7 (999) 123-45-67",
   instagram: "https://instagram.com/lubov.art.gallery",
   telegram: "https://t.me/lubov_art",
