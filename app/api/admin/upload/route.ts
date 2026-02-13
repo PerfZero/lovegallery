@@ -16,6 +16,9 @@ function resolveUploadDirs(): string[] {
     );
   }
 
+  // Persistent app data dir (recommended for production).
+  dirs.add(path.join(process.cwd(), "data", "uploads"));
+
   // Dev / non-standalone Next runtime.
   dirs.add(path.join(process.cwd(), "public", "uploads"));
 
