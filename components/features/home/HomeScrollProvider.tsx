@@ -10,6 +10,7 @@ import Footer from "@/components/layout/Footer";
 import HeroSection from "@/components/sections/HeroSection";
 import GalleryCarousel from "@/components/sections/GalleryCarousel";
 import ContactSection from "@/components/sections/ContactSection";
+import AnimatedTextOverlay from "@/components/sections/AnimatedTextOverlay";
 
 // =============================================================================
 // Home Scroll Provider Component
@@ -28,6 +29,8 @@ export const HomeScrollProvider = ({ children }: HomeScrollProviderProps) => {
       <Header />
 
       <main className="relative">
+        <AnimatedTextOverlay />
+
         <div className="relative ">
           <HeroSection />
         </div>
