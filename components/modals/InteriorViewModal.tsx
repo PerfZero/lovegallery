@@ -86,7 +86,7 @@ export const InteriorViewModal = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
-        className={`p-0 bg-black border-none overflow-hidden transition-all duration-500 ease-in-out ${
+        className={`p-0 bg-background/98 backdrop-blur-xl border border-foreground/10 overflow-hidden transition-all duration-500 ease-in-out ${
           isFullscreen
             ? "!fixed !inset-0 !translate-x-0 !translate-y-0 !w-[100vw] !h-[100dvh] !max-w-none !max-h-none !rounded-none !z-[100]"
             : "max-w-[95vw] md:max-w-[1200px] h-auto rounded-lg shadow-2xl"
@@ -96,12 +96,12 @@ export const InteriorViewModal = ({
           Интерьерная примерка: {productTitle || "Арт-объект"}
         </DialogTitle>
         {/* Header Overlay */}
-        <div className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between p-6 md:p-8 bg-gradient-to-b from-black/80 via-black/40 to-transparent pointer-events-auto">
+        <div className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between p-6 md:p-8 bg-gradient-to-b from-background/90 via-background/60 to-transparent pointer-events-auto">
           <div className="space-y-1">
             <p className="text-[10px] text-accent font-bold uppercase tracking-[0.3em] opacity-80">
               Примерка: {productTitle || "Арт-объект"}
             </p>
-            <h3 className="text-white font-display text-xl md:text-2xl italic drop-shadow-lg">
+            <h3 className="text-foreground font-display text-xl md:text-2xl italic drop-shadow-lg">
               {currentInterior.title}
             </h3>
           </div>
@@ -109,7 +109,7 @@ export const InteriorViewModal = ({
             variant="ghost"
             size="icon"
             onClick={onClose}
-            className="text-white/80 hover:text-white hover:bg-white/10 transition-all rounded-full h-12 w-12 flex-shrink-0"
+            className="text-foreground/80 hover:text-foreground hover:bg-foreground/10 transition-all rounded-full h-12 w-12 flex-shrink-0"
           >
             <X size={24} />
           </Button>
@@ -117,14 +117,14 @@ export const InteriorViewModal = ({
 
         {/* Main Viewport */}
         <div
-          className={`relative w-full bg-[#0a0a0a] overflow-hidden transition-all duration-500 ${isFullscreen ? "h-[100dvh]" : "aspect-video"}`}
+          className={`relative w-full bg-background/98 backdrop-blur-xl overflow-hidden transition-all duration-500 ${isFullscreen ? "h-[100dvh]" : "aspect-video"}`}
         >
           {/* Background Interior */}
           <img
             key={currentInterior.src}
             src={currentInterior.src}
             alt={currentInterior.title}
-            className="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000"
+            className="absolute inset-0 w-full h-full object-contain transition-opacity duration-1000"
           />
 
           {/* Navigation Buttons Overlay */}
@@ -133,7 +133,7 @@ export const InteriorViewModal = ({
               variant="ghost"
               size="icon"
               onClick={prevInterior}
-              className="pointer-events-auto text-white/40 hover:text-white hover:bg-white/10 bg-black/5 backdrop-blur-sm rounded-full w-12 h-12 md:w-16 md:h-16 transition-all"
+              className="pointer-events-auto text-foreground/60 hover:text-foreground hover:bg-foreground/10 bg-foreground/5 backdrop-blur-md rounded-full w-12 h-12 md:w-16 md:h-16 transition-all border border-foreground/10"
             >
               <ChevronLeft size={32} strokeWidth={1} />
             </Button>
@@ -141,7 +141,7 @@ export const InteriorViewModal = ({
               variant="ghost"
               size="icon"
               onClick={nextInterior}
-              className="pointer-events-auto text-white/40 hover:text-white hover:bg-white/10 bg-black/5 backdrop-blur-sm rounded-full w-12 h-12 md:w-16 md:h-16 transition-all"
+              className="pointer-events-auto text-foreground/60 hover:text-foreground hover:bg-foreground/10 bg-foreground/5 backdrop-blur-md rounded-full w-12 h-12 md:w-16 md:h-16 transition-all border border-foreground/10"
             >
               <ChevronRight size={32} strokeWidth={1} />
             </Button>
@@ -158,9 +158,9 @@ export const InteriorViewModal = ({
                 <img
                   src={productImage}
                   alt={productTitle || "Произведение"}
-                  className="w-full h-full object-cover drop-shadow-[0_12px_18px_rgba(0,0,0,0.25)] brightness-[0.96] contrast-[0.98] saturate-[0.92]"
+                  className="w-full h-full object-contain drop-shadow-[0_12px_18px_rgba(0,0,0,0.25)] brightness-[0.96] contrast-[0.98] saturate-[0.92]"
                 />
-                <div className="absolute inset-0 bg-black/10 mix-blend-multiply pointer-events-none" />
+                <div className="absolute inset-0 bg-foreground/10 mix-blend-multiply pointer-events-none" />
               </div>
             </div>
           )}
@@ -177,7 +177,7 @@ export const InteriorViewModal = ({
                     Интерьер {currentIndex + 1} из {interiorImages.length}
                   </p>
                 </div>
-                <p className="text-[11px] md:text-sm font-body italic text-white/70 leading-relaxed">
+                <p className="text-[11px] md:text-sm font-body italic text-foreground/70 leading-relaxed">
                   Переключайте интерьеры, чтобы подобрать идеальное место для
                   вашей работы.
                 </p>
@@ -209,7 +209,7 @@ export const InteriorViewModal = ({
               e.stopPropagation();
               toggleFullscreen();
             }}
-            className="absolute bottom-10 right-10 text-white bg-black/40 hover:bg-black/60 backdrop-blur-xl rounded-full w-16 h-16 z-40 border border-white/10 shadow-2xl transition-all"
+            className="absolute bottom-10 right-10 text-foreground bg-foreground/15 hover:bg-foreground/25 backdrop-blur-xl rounded-full w-16 h-16 z-40 border border-foreground/20 shadow-2xl transition-all"
             title="Свернуть"
           >
             <Maximize2 size={24} className="rotate-180" />
