@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, forwardRef, useEffect, useRef } from "react";
+import { useMemo, forwardRef, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { artworks, type Artwork, categoryThemes } from "@/data/artworks";
+import { isCatalogPageContent } from "@/lib/catalog-page-content";
 import {
   galleryImagesData,
   type ResponsiveSize,
@@ -44,15 +45,63 @@ const MOBILE_LOOP_RESUME_DELAY_MS = 900;
  * - Hover pause and zoom effects
  */
 const GalleryCarousel = () => {
+  const [sliderArtworks, setSliderArtworks] = useState<Artwork[]>(artworks);
+  const [categoryLabelMap, setCategoryLabelMap] = useState<
+    Record<string, string>
+  >(() =>
+    Object.fromEntries(
+      Object.entries(categoryThemes).map(([id, theme]) => [id, theme.title]),
+    ),
+  );
+
+  useEffect(() => {
+    let mounted = true;
+
+    Promise.allSettled([
+      fetch("/api/catalog", { cache: "no-store" }).then((res) => res.json()),
+      fetch("/api/catalog-content", { cache: "no-store" }).then((res) =>
+        res.json(),
+      ),
+    ]).then(([catalogResult, contentResult]) => {
+      if (!mounted) return;
+
+      if (catalogResult.status === "fulfilled") {
+        const data = catalogResult.value;
+        if (Array.isArray(data.items) && data.items.length > 0) {
+          setSliderArtworks(data.items as Artwork[]);
+        }
+      }
+
+      if (contentResult.status === "fulfilled") {
+        const data = contentResult.value;
+        if (isCatalogPageContent(data?.item)) {
+          const labels = Object.fromEntries(
+            data.item.categories.map((item: { id: string; title: string }) => [
+              item.id,
+              item.title,
+            ]),
+          );
+          setCategoryLabelMap((prev) => ({ ...prev, ...labels }));
+        }
+      }
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   // Build carousel items from artworks, cycling through layout styles
   const carouselItems = useMemo(() => {
-    return artworks.map((artwork, index) => {
+    return sliderArtworks.map((artwork, index) => {
       const layoutStyle = galleryImagesData[index % galleryImagesData.length];
       return {
         artwork,
         href: `/catalog/${artwork.category}/${artwork.id}`,
         categoryLabel:
-          categoryThemes[artwork.category]?.title || artwork.category,
+          categoryLabelMap[artwork.category] ||
+          categoryThemes[artwork.category]?.title ||
+          artwork.category,
         widthPx: layoutStyle.width,
         heightPx: layoutStyle.height,
         marginTopPx: layoutStyle.marginTop,
@@ -61,7 +110,7 @@ const GalleryCarousel = () => {
         rounded: layoutStyle.rounded,
       } as CarouselItem;
     });
-  }, []);
+  }, [sliderArtworks, categoryLabelMap]);
 
   // Triple items for seamless infinite scroll
   const marqueeItems = useMemo(
