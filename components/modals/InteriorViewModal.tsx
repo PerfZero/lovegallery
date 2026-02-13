@@ -78,7 +78,7 @@ export const InteriorViewModal = ({
   // Calculate aspect ratio class
   const ratioClass =
     aspectRatio === "landscape"
-      ? "aspect-video"
+      ? "aspect-[4/3]"
       : aspectRatio === "square"
         ? "aspect-square"
         : "aspect-[3/4]";
