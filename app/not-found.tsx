@@ -82,7 +82,7 @@ export default function NotFound() {
                                 {[
                                     { label: "О нас", href: "/about" },
                                     { label: "Картины", href: "/catalog/painting" },
-                                    { label: "Фотография", href: "/catalog/photography" },
+                                    { label: "Фотография", href: "/catalog/photo" },
                                     { label: "Арт-инсайты", href: "/art-insights" },
                                 ].map((link) => (
                                     <Link

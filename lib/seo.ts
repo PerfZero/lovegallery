@@ -24,7 +24,14 @@ export function toAbsoluteUrl(path: string) {
   }
 
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  return new URL(normalizedPath, resolvedSiteUrl).toString();
+  const withTrailingSlash =
+    normalizedPath === "/" ||
+    /[?#]/.test(normalizedPath) ||
+    /\.[a-z0-9]+$/i.test(normalizedPath)
+      ? normalizedPath
+      : `${normalizedPath.replace(/\/+$/, "")}/`;
+
+  return new URL(withTrailingSlash, resolvedSiteUrl).toString();
 }
 
 function getSocialImageUrls(image?: string) {

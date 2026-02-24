@@ -24,7 +24,7 @@ export const siteConfig = {
     "Галерея Любовь подбирает искусство для интерьеров: авторская живопись, фотография, текстиль и коллекции с персональной консультацией и сопровождением заказа.",
 
   /** Base URL for production */
-  url: "https://love.design",
+  url: "https://lovegallery.ru",
 
   /** Default locale */
   locale: "ru-RU",
